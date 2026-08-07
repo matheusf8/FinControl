@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
+from app.routers import auth
 
 app = FastAPI(title=settings.app_name)
 
@@ -25,9 +26,11 @@ def health_check() -> dict[str, str]:
     return {"status": "ok", "app": settings.app_name}
 
 
-# Sprint 4+: rotas de negócio entram aqui, ex:
-# from app.routers import auth, accounts, transactions
-# app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+
+# Sprint 4+: mais rotas de negócio entram aqui, ex:
+# from app.routers import accounts, transactions
+# app.include_router(accounts.router, prefix="/api/accounts", tags=["accounts"])
 
 # Serve o build do frontend (gerado no Sprint 8) se existir, na raiz "/".
 # Em dev, o frontend roda separado via `npm run dev` (Vite), então essa pasta
