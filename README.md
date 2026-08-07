@@ -4,7 +4,7 @@ Sistema de controle financeiro pessoal — programa de desktop, uso local, sem p
 
 **Stack:** React (Vite) + FastAPI + SQLite, empacotado como executável único (`.exe`) com PyInstaller + pywebview.
 
-> ✅ MVP completo (Sprints 1–7): autenticação, contas, categorias, transações, dashboard com gráficos, cartões com parcelamento, metas e modo escuro. Empacotamento final em `.exe` em andamento (Sprint 8). Veja o [plano de execução](./PLANO_EXECUCAO.md) completo.
+> ✅ **MVP completo (Sprints 1–8):** autenticação, contas, categorias, transações, dashboard com gráficos, cartões com parcelamento, metas, modo escuro e empacotamento em `.exe`. Veja o [plano de execução](./PLANO_EXECUCAO.md) completo.
 
 ## Funcionalidades
 
@@ -16,6 +16,15 @@ Sistema de controle financeiro pessoal — programa de desktop, uso local, sem p
 - **Metas financeiras** — com barra de progresso e registro de contribuições
 - **Modo escuro** — com toggle manual, persistido
 - **Responsivo** — funciona também no celular
+- **Programa de desktop** — roda como `.exe`, sem terminal, sem instalar nada
+
+## Como usar (só abrir o programa)
+
+Se você já tem a pasta `FinControl/` gerada (ver "Como gerar o `.exe`" abaixo), é só:
+
+1. Clicar duas vezes em `FinControl.exe`
+2. Pronto — abre numa janela, sem terminal. Na primeira vez, ele cria sozinho o banco de dados (`fincontrol.db`) e a chave de segurança (`.env`) do lado do `.exe`
+3. Pra usar em outro PC (ou guardar no pen drive), é só copiar a pasta `FinControl/` inteira — os dados vão junto
 
 ## Como rodar (desenvolvimento)
 
@@ -25,6 +34,7 @@ cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
@@ -37,7 +47,7 @@ npm run dev
 
 ## Como rodar os testes
 
-Backend (63 testes):
+Backend (64 testes):
 ```bash
 cd backend
 .venv\Scripts\python.exe -m pytest
@@ -49,13 +59,29 @@ cd frontend
 npm run test
 ```
 
-## Como gerar o `.exe` (produção)
+## Como gerar o `.exe`
 
-Ver Sprint 8 do [plano de execução](./PLANO_EXECUCAO.md) — build do frontend + PyInstaller geram uma pasta portátil com `FinControl.exe`, sem precisar instalar nada na máquina de destino.
+```powershell
+# 1. Build do frontend
+cd frontend
+npm run build
+
+# 2. Copia o build pra dentro do backend (o FastAPI serve ele)
+Remove-Item -Recurse -Force ..\backend\app\static\* -ErrorAction SilentlyContinue
+Copy-Item -Recurse dist\* ..\backend\app\static\
+
+# 3. Gera o executável (pasta portátil desktop/dist/FinControl/)
+cd ..\desktop
+..\backend\.venv\Scripts\pyinstaller.exe build.spec --noconfirm
+```
+
+O resultado fica em `desktop/dist/FinControl/` — a pasta inteira é o programa (`FinControl.exe` + arquivos de suporte). Copie ela pra onde quiser usar.
+
+Se algo der errado ao abrir o `.exe` (não deveria, mas caso aconteça), o diagnóstico fica em `launcher.log`, criado do lado do `.exe`.
 
 ## Estrutura
 
 - `backend/` — API em FastAPI + banco SQLite local
 - `frontend/` — interface em React
-- `desktop/` — empacotamento final (pywebview + PyInstaller)
+- `desktop/` — empacotamento final (`launcher.py`, `build.spec`, `icon.ico`)
 - `docs/` — documentação do projeto

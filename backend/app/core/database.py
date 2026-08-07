@@ -27,3 +27,15 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def init_db() -> None:
+    """Cria as tabelas que ainda não existem (idempotente — não mexe em
+    tabela já existente). Em dev, o schema normalmente já foi criado via
+    `alembic upgrade head`, então isso não faz nada na prática; no .exe
+    empacotado é o que garante que um `fincontrol.db` novo (primeira
+    execução, ou pasta copiada pra outro PC do zero) já nasce funcional, sem
+    precisar rodar Alembic manualmente — o exe não tem terminal."""
+    import app.models  # noqa: F401 — registra todos os models em Base.metadata
+
+    Base.metadata.create_all(bind=engine)

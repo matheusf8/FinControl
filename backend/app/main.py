@@ -1,4 +1,5 @@
 """Ponto de entrada da API FastAPI."""
+import sys
 import warnings
 from pathlib import Path
 
@@ -50,7 +51,15 @@ app.include_router(goals.router, prefix="/api/goals", tags=["goals"])
 # Serve o build do frontend (Sprint 8) se existir. Em dev, o frontend roda
 # separado via `npm run dev` (Vite), então essa pasta fica vazia e nada disso
 # é registrado.
-_static_dir = Path(__file__).resolve().parent / "static"
+#
+# Empacotado (PyInstaller): módulos Python puros ficam embutidos num arquivo
+# .pyz, então `Path(__file__)` não aponta pra um caminho real em disco —
+# `sys._MEIPASS` é o jeito correto de achar dados empacotados (`datas` no
+# .spec) nesse caso. Em dev, `__file__` funciona normalmente.
+if getattr(sys, "frozen", False):
+    _static_dir = Path(sys._MEIPASS) / "app" / "static"  # type: ignore[attr-defined]
+else:
+    _static_dir = Path(__file__).resolve().parent / "static"
 if _static_dir.exists() and any(_static_dir.iterdir()):
     app.mount("/assets", StaticFiles(directory=_static_dir / "assets"), name="assets")
 

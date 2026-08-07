@@ -6,9 +6,9 @@ Repositório: `github.com/matheusf8/sistema-financeiro` — pode ficar **privado
 
 ## Status atual (2026-08-07)
 
-**Sprints 1–7 concluídas.** MVP funcional completo — auth, contas/categorias/transações, dashboard com gráficos, cartões com parcelamento, metas, modo escuro, rate limiting, responsividade mobile. 63 testes (todos verdes). 11 commits no `main`, todos locais (falta só `git push`, que é manual — ver seção "Fluxo de trabalho").
+**Sprints 1–8 concluídas — projeto fechado.** MVP funcional completo — auth, contas/categorias/transações, dashboard com gráficos, cartões com parcelamento, metas, modo escuro, rate limiting, responsividade mobile, e empacotado num `.exe` de verdade (janela nativa, sem terminal, ícone próprio). 64 testes (todos verdes). Commits locais no `main` (falta só `git push`, que é manual — ver seção "Fluxo de trabalho").
 
-**Em andamento: Sprint 8** — empacotamento em `.exe`.
+**Testado de ponta a ponta:** `FinControl.exe` rodando de uma pasta fora do ambiente de dev (simulando outro PC) — abre a janela, cria `fincontrol.db` e `.env` sozinho, backend responde, frontend carrega e navega certinho.
 
 ---
 
@@ -75,9 +75,11 @@ sistema-financeiro/
 │   │   ├── store/          # authStore, themeStore (zustand)
 │   │   └── types/
 │   └── package.json
-├── desktop/                 # empacotamento final (Sprint 8, em andamento)
+├── desktop/                 # empacotamento final
 │   ├── launcher.py          # abre a janela pywebview + sobe o backend
-│   └── build.spec           # config do PyInstaller
+│   ├── build.spec           # config do PyInstaller
+│   ├── icon.ico              # ícone do FinControl
+│   └── dist/FinControl/      # gerado pelo PyInstaller (fora do git)
 ├── docs/                    # documento mestre, ADRs, etc.
 ├── .github/workflows/ci.yml
 ├── .env.example
@@ -115,13 +117,14 @@ Model `Card` + `Transaction` estendida (parcelas, sem model `Installment` separa
 ### ✅ Sprint 7 — Metas + qualidade
 Model `Goal` com progresso visual, rate limiting no login, aviso de SECRET_KEY padrão, responsividade mobile testada em 375px. 63 testes. Commit `887118b`.
 
-### 🔨 Sprint 8 — Empacotamento em .exe (em andamento)
-- Build do frontend (`npm run build`) copiado pra dentro de `backend/app/static/`
-- `desktop/launcher.py`: sobe o FastAPI (Uvicorn) em background + abre janela pywebview apontando pra ele
-- `desktop/build.spec` + PyInstaller: gera `FinControl.exe` numa pasta portátil (`dist/FinControl/`)
-- Testar rodando o `.exe` de uma pasta fora do ambiente de desenvolvimento (simulando "outro PC")
-- README completo (como rodar em dev, como gerar o `.exe`, como usar)
-- **Aceite:** clicar em `FinControl.exe` abre o app numa janela, sem terminal, sem instalar nada, com os dados salvos em `fincontrol.db` na mesma pasta
+### ✅ Sprint 8 — Empacotamento em .exe
+- Build do frontend copiado pra `backend/app/static/`; fallback de SPA no FastAPI (rotas do React Router funcionam com reload direto, sem 404)
+- `config.py` ajustado pra achar `fincontrol.db`/`.env` do lado do `.exe` (não dentro da pasta interna do PyInstaller) — gera `SECRET_KEY` sozinho na primeira execução
+- `database.py`: `init_db()` cria o schema sozinho num banco novo (sem precisar rodar Alembic manualmente — o `.exe` não tem terminal)
+- `desktop/launcher.py`: sobe o FastAPI (Uvicorn) numa thread + abre janela pywebview; log de diagnóstico em `launcher.log`
+- `desktop/build.spec` + PyInstaller (modo `--onedir`, sem terminal, ícone próprio): gera `FinControl.exe`
+- Testado rodando de uma pasta fora do ambiente de dev (simulando "outro PC"): abre, cria banco+`.env` sozinho, backend responde, frontend carrega
+- **Aceite:** clicar em `FinControl.exe` abre o app numa janela, sem terminal, sem instalar nada, com os dados salvos em `fincontrol.db` na mesma pasta ✅
 
 ---
 
@@ -156,4 +159,10 @@ Esses ficam fora dos 8 sprints — só entram se sobrar tempo/energia depois do 
 ---
 
 ## Checklist final (do documento mestre)
-`[x] Login [x] Cadastro [x] JWT [x] CRUD Receitas [x] CRUD Despesas [x] Dashboard [x] Gráficos [x] Cartões [x] Parcelamento [x] Metas [ ] Empacotamento .exe [x] Testes [x] README`
+`[x] Login [x] Cadastro [x] JWT [x] CRUD Receitas [x] CRUD Despesas [x] Dashboard [x] Gráficos [x] Cartões [x] Parcelamento [x] Metas [x] Empacotamento .exe [x] Testes [x] README`
+
+---
+
+## 🎉 Projeto fechado
+
+Todas as 8 sprints do MVP concluídas. O FinControl roda como programa de desktop de verdade — `.exe` com janela própria, ícone próprio, sem terminal, sem instalar nada, 100% local. Backlog futuro (Open Finance, notificações, IA) fica pra depois, se um dia fizer sentido continuar.
