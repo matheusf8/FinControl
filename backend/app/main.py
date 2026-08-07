@@ -2,8 +2,9 @@
 import warnings
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
@@ -46,9 +47,25 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"]
 app.include_router(cards.router, prefix="/api/cards", tags=["cards"])
 app.include_router(goals.router, prefix="/api/goals", tags=["goals"])
 
-# Serve o build do frontend (gerado no Sprint 8) se existir, na raiz "/".
-# Em dev, o frontend roda separado via `npm run dev` (Vite), então essa pasta
-# fica vazia e essa linha não faz nada.
+# Serve o build do frontend (Sprint 8) se existir. Em dev, o frontend roda
+# separado via `npm run dev` (Vite), então essa pasta fica vazia e nada disso
+# é registrado.
 _static_dir = Path(__file__).resolve().parent / "static"
 if _static_dir.exists() and any(_static_dir.iterdir()):
-    app.mount("/", StaticFiles(directory=_static_dir, html=True), name="static")
+    app.mount("/assets", StaticFiles(directory=_static_dir / "assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    def spa_fallback(full_path: str) -> FileResponse:
+        """Fallback de SPA: qualquer rota que não seja /api/* (já tratada
+        pelos routers acima) ou /assets/* (já tratada pelo mount acima) é uma
+        rota do React Router (ex: /dashboard, /accounts) — sempre serve o
+        index.html e deixa o client-side router decidir o que mostrar. Sem
+        isso, recarregar a página numa rota que não seja "/" dava 404.
+
+        /api/* que não bateu em nenhum router acima continua dando 404 de
+        verdade — sem esse guard, uma chamada de API com o caminho errado
+        vinha com 200 + HTML em vez de 404 + JSON, quebrando o error handling
+        do frontend."""
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not Found")
+        return FileResponse(_static_dir / "index.html")
