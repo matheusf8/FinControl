@@ -142,3 +142,43 @@ def test_deleting_account_cascades_transactions(client, auth_headers):
 
     resp = client.get(f"/api/transactions/{created['id']}", headers=auth_headers)
     assert resp.status_code == 404
+
+
+def test_list_transactions_includes_card_installments(client, auth_headers):
+    """Regressão: GET /api/transactions quebrava com 500 quando havia parcela
+    de cartão na lista, porque TransactionResponse.account_id exigia string
+    (parcela de cartão tem account_id=None, ver Sprint 6)."""
+    account = _create_account(client, auth_headers)
+    client.post(
+        "/api/transactions",
+        json={
+            "account_id": account["id"],
+            "type": "expense",
+            "amount": "50.00",
+            "date": "2026-08-01T10:00:00",
+        },
+        headers=auth_headers,
+    )
+
+    card = client.post(
+        "/api/cards",
+        json={"name": "Cartao", "closing_day": 20, "due_day": 27, "limit": "1000.00"},
+        headers=auth_headers,
+    ).json()
+    client.post(
+        f"/api/cards/{card['id']}/purchases",
+        json={"total_amount": "90.00", "installments": 3, "purchase_date": "2026-01-05"},
+        headers=auth_headers,
+    )
+
+    resp = client.get("/api/transactions", headers=auth_headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body) == 4  # 1 lançamento de conta + 3 parcelas de cartão
+
+    card_txs = [t for t in body if t["card_id"] is not None]
+    account_txs = [t for t in body if t["account_id"] is not None]
+    assert len(card_txs) == 3
+    assert len(account_txs) == 1
+    assert all(t["account_id"] is None for t in card_txs)
+    assert all(t["card_id"] is None for t in account_txs)

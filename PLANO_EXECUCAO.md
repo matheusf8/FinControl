@@ -4,25 +4,32 @@ Projeto pessoal: sistema de controle financeiro que roda **local, como programa 
 Stack: **React (Vite) → FastAPI → SQLite**, empacotado num executável único com PyInstaller + pywebview.
 Repositório: `github.com/matheusf8/sistema-financeiro` — pode ficar **privado**, é só backup do código-fonte, não precisa publicar nada.
 
+## Status atual (2026-08-07)
+
+**Sprints 1–7 concluídas.** MVP funcional completo — auth, contas/categorias/transações, dashboard com gráficos, cartões com parcelamento, metas, modo escuro, rate limiting, responsividade mobile. 63 testes (todos verdes). 11 commits no `main`, todos locais (falta só `git push`, que é manual — ver seção "Fluxo de trabalho").
+
+**Em andamento: Sprint 8** — empacotamento em `.exe`.
+
 ---
 
 ## Stack técnica
 
 **Frontend**
 - React + Vite + TypeScript
-- TailwindCSS (estilo)
+- TailwindCSS v4 (estilo, dark mode por classe com toggle manual)
 - React Router (rotas)
-- React Query (dados do servidor) + Zustand (estado local/auth)
+- React Query (dados do servidor) + Zustand (estado local/auth/tema, persistidos no localStorage)
 - React Hook Form + Zod (formulários e validação)
 - Recharts (gráficos do dashboard)
 - Build final: arquivos estáticos (`npm run build`), servidos pelo próprio backend — não roda mais como servidor de dev separado no produto final
 
 **Backend**
 - Python 3.12 + FastAPI
-- SQLAlchemy 2.0 + Alembic (models e migrations)
+- SQLAlchemy 2.0 + Alembic (models e migrations, batch mode habilitado pro SQLite suportar ALTER/CHECK constraint)
 - Pydantic v2 (schemas)
-- JWT (access + refresh token) com passlib/bcrypt para hash de senha
+- JWT (access + refresh token) com **bcrypt direto** para hash de senha (não passlib — passlib 1.7.4 é incompatível com bcrypt novo, bug conhecido sem correção)
 - Arquitetura em camadas: `routers → services → repositories → models/schemas`
+- Rate limiting básico em memória no login (5 tentativas erradas = bloqueio de 5 min, por e-mail)
 
 **Banco de dados**
 - **SQLite** — um arquivo `.db` local, sem servidor separado (trocamos PostgreSQL por isso: mais simples de empacotar num `.exe`, e o app é de uso pessoal/single-user, então não perde nada relevante)
@@ -33,41 +40,42 @@ Repositório: `github.com/matheusf8/sistema-financeiro` — pode ficar **privado
 - Resultado: uma pasta com `FinControl.exe` + arquivos de suporte + `fincontrol.db`, portátil — copia pra qualquer PC Windows e roda
 
 **Testes**
-- Backend: pytest + httpx
-- Frontend: Vitest + React Testing Library
+- Backend: pytest + httpx — 63 testes (auth, contas, categorias, transações, dashboard, cartões/parcelamento, metas)
+- Frontend: Vitest + React Testing Library — 6 testes (fluxo de auth/rotas protegidas)
+- Validação manual no navegador em toda sprint, além dos testes automatizados (pegou bugs reais que os testes não cobriam)
 
 **CI**
 - GitHub Actions: roda lint + testes a cada push (só validação, não publica nada, não builda o `.exe` automaticamente por enquanto)
 
 ---
 
-## Estrutura de pastas proposta
+## Estrutura de pastas atual
 
 ```
 sistema-financeiro/
 ├── backend/
 │   ├── app/
-│   │   ├── core/          # config, segurança, JWT
-│   │   ├── models/        # SQLAlchemy models
+│   │   ├── core/          # config, security (JWT/bcrypt), rate_limit, database, dependencies
+│   │   ├── models/        # SQLAlchemy: User, Account, Category, Transaction, Card, Goal
 │   │   ├── schemas/       # Pydantic schemas
 │   │   ├── repositories/  # acesso ao banco
 │   │   ├── services/      # regras de negócio
-│   │   ├── routers/       # endpoints REST
-│   │   ├── static/        # build do frontend entra aqui na hora de empacotar
+│   │   ├── routers/       # auth, accounts, categories, transactions, dashboard, cards, goals
+│   │   ├── static/        # build do frontend entra aqui na hora de empacotar (Sprint 8)
 │   │   └── main.py
-│   ├── alembic/
-│   ├── tests/
+│   ├── alembic/versions/  # 5 migrations aplicadas
+│   ├── tests/              # 63 testes
 │   ├── requirements.txt
 │   └── fincontrol.db      # banco SQLite (fora do git)
 ├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── hooks/
-│   │   ├── services/       # cliente da API
-│   │   └── store/
+│   │   ├── components/    # AppLayout, ProtectedRoute, ThemeToggle
+│   │   ├── pages/          # Login, Register, Dashboard, Accounts, Categories, Transactions, Cards, Goals
+│   │   ├── services/       # api.ts (axios+interceptor) + um service por domínio
+│   │   ├── store/          # authStore, themeStore (zustand)
+│   │   └── types/
 │   └── package.json
-├── desktop/                 # empacotamento final
+├── desktop/                 # empacotamento final (Sprint 8, em andamento)
 │   ├── launcher.py          # abre a janela pywebview + sobe o backend
 │   └── build.spec           # config do PyInstaller
 ├── docs/                    # documento mestre, ADRs, etc.
@@ -80,64 +88,39 @@ sistema-financeiro/
 
 ## Estratégia: MVP primeiro
 
-O documento mestre original cobre 13 capítulos e recursos avançados (Open Finance, IA). Para não travar o projeto, a ordem é: **MVP funcional completo primeiro, extras depois**. Cartões/parcelamento entram antes de metas porque têm mais valor de portfólio (mostram lógica de negócio mais complexa).
+O documento mestre original cobre 13 capítulos e recursos avançados (Open Finance, IA). Para não travar o projeto, a ordem foi: **MVP funcional completo primeiro, extras depois**. Cartões/parcelamento entraram antes de metas porque têm mais valor de portfólio (mostram lógica de negócio mais complexa).
 
 ---
 
 ## Sprints
 
-### Sprint 1 — Setup do projeto
-- Criar repositório no GitHub (`matheusf8/sistema-financeiro`, pode ser privado), branch `main` protegida + `dev`
-- Estrutura de pastas (backend/frontend), venv Python + `requirements.txt`, scaffold do Vite + dependências do frontend
-- `.env.example`, `.gitignore`, README inicial
-- GitHub Actions básico (roda lint em cada push)
-- **Aceite:** backend sobe com `uvicorn app.main:app --reload` e frontend com `npm run dev`, ambos sem erro
+### ✅ Sprint 1 — Setup do projeto
+Backend FastAPI + frontend Vite/React, stack SQLite, CI básico. Commit `b115d69`.
 
-### Sprint 2 — Backend: fundação + autenticação
-- Modelo `User`, configuração do SQLAlchemy + Alembic (primeira migration) apontando pro SQLite
-- Endpoints de registro, login, refresh token (JWT), hash de senha
-- Middleware de autorização (rotas protegidas)
-- Testes de auth com pytest
-- **Aceite:** registro/login funcionando via Swagger (`/docs`), senha nunca em texto puro
+### ✅ Sprint 2 — Backend: fundação + autenticação
+Model `User`, JWT (access+refresh) com bcrypt, endpoints de registro/login/refresh/me. 12 testes. Commit `b594200`.
 
-### Sprint 3 — Frontend: fundação + autenticação
-- Setup Vite + Tailwind + React Router
-- Páginas de login/cadastro, cliente HTTP com interceptor de token
-- Rotas protegidas, persistência de sessão
-- **Aceite:** usuário consegue criar conta e logar pela interface, sem acesso a rotas protegidas deslogado
+### ✅ Sprint 3 — Frontend: fundação + autenticação
+Login/cadastro (RHF+Zod), rotas protegidas, interceptor de token com refresh automático. Validado no navegador. Commit `890b7e6`.
 
-### Sprint 4 — Núcleo financeiro: contas, categorias e transações
-- Modelos `Account`, `Category`, `Transaction` (receitas/despesas)
-- CRUD completo (API + telas): criar conta, categorias, lançar receita/despesa
-- Listagem com filtros (data, categoria, tipo)
-- **Aceite:** usuário cadastra uma conta, categoriza e lança transações, vê a lista atualizada
+### ✅ Sprint 4 — Núcleo financeiro: contas, categorias e transações
+Models `Account`, `Category`, `Transaction`. CRUD completo + telas + filtros. 28 testes. Commit `d314c15`.
 
-### Sprint 5 — Dashboard e relatórios
-- Endpoints de agregação (saldo, gastos por categoria, evolução mensal)
-- Dashboard com gráficos (Recharts): pizza por categoria, linha de evolução, saldo por conta
-- Filtros de período
-- **Aceite:** dashboard reflete corretamente os dados lançados, com gráficos funcionais
+### ✅ Sprint 5 — Dashboard e relatórios
+Agregações (saldo, gastos por categoria, evolução mensal) + gráficos Recharts. 35 testes. Commit `52984f0`.
 
-### Sprint 6 — Cartões e parcelamento
-- Modelos `Card`, `Installment`
-- Lançamento de compra parcelada gerando parcelas futuras automaticamente
-- Fatura do cartão por mês
-- **Aceite:** uma compra em 3x gera 3 lançamentos corretos nos meses seguintes
+### ✅ Sprint 6 — Cartões e parcelamento
+Model `Card` + `Transaction` estendida (parcelas, sem model `Installment` separado — decisão de design pra reaproveitar toda a infra de listagem/dashboard já existente). Lógica de fechamento/vencimento, divisão com ajuste de arredondamento. 50 testes. Commit `6e3bc82`.
 
-### Sprint 7 — Metas + qualidade (não funcionais)
-- Modelo `Goal`, CRUD de metas com progresso visual
-- Cobertura de testes (backend e frontend) nos fluxos críticos
-- Validações de entrada, tratamento de erros, responsividade da janela
-- Revisão de segurança básica (variáveis sensíveis fora do código)
-- **Aceite:** suite de testes passando no CI
+### ✅ Sprint 7 — Metas + qualidade
+Model `Goal` com progresso visual, rate limiting no login, aviso de SECRET_KEY padrão, responsividade mobile testada em 375px. 63 testes. Commit `887118b`.
 
-### Sprint 8 — Empacotamento em .exe
+### 🔨 Sprint 8 — Empacotamento em .exe (em andamento)
 - Build do frontend (`npm run build`) copiado pra dentro de `backend/app/static/`
 - `desktop/launcher.py`: sobe o FastAPI (Uvicorn) em background + abre janela pywebview apontando pra ele
 - `desktop/build.spec` + PyInstaller: gera `FinControl.exe` numa pasta portátil (`dist/FinControl/`)
 - Testar rodando o `.exe` de uma pasta fora do ambiente de desenvolvimento (simulando "outro PC")
 - README completo (como rodar em dev, como gerar o `.exe`, como usar)
-- Seed de dados de demonstração opcional
 - **Aceite:** clicar em `FinControl.exe` abre o app numa janela, sem terminal, sem instalar nada, com os dados salvos em `fincontrol.db` na mesma pasta
 
 ---
@@ -173,4 +156,4 @@ Esses ficam fora dos 8 sprints — só entram se sobrar tempo/energia depois do 
 ---
 
 ## Checklist final (do documento mestre)
-`[ ] Login [ ] Cadastro [ ] JWT [ ] CRUD Receitas [ ] CRUD Despesas [ ] Dashboard [ ] Gráficos [ ] Cartões [ ] Parcelamento [ ] Metas [ ] Empacotamento .exe [ ] Testes [ ] README`
+`[x] Login [x] Cadastro [x] JWT [x] CRUD Receitas [x] CRUD Despesas [x] Dashboard [x] Gráficos [x] Cartões [x] Parcelamento [x] Metas [ ] Empacotamento .exe [x] Testes [x] README`
