@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+/* Tailwind v4: por padrão o dark: só segue a preferência do SO (media query).
+   Isso troca pra estratégia por classe, pra dar pra alternar manualmente
+   com um botão (ver src/store/themeStore.ts + ThemeToggle). */
+@custom-variant dark (&:where(.dark, .dark *));

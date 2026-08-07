@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
+import { ThemeToggle } from '../components/ThemeToggle'
 import { authService } from '../services/authService'
 
 const registerSchema = z
@@ -51,6 +52,9 @@ export function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <form
         onSubmit={handleSubmit(onSubmit)}
         noValidate

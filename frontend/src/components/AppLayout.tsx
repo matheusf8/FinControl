@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { ThemeToggle } from './ThemeToggle'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-2 rounded text-sm font-medium ${
@@ -32,6 +33,7 @@ export function AppLayout() {
           </NavLink>
         </div>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <span className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</span>
           <button
             type="button"
