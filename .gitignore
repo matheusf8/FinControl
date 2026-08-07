@@ -1,0 +1,29 @@
+# Ambiente
+.env
+.env.local
+
+# Backend (Python)
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Frontend (Node)
+node_modules/
+dist/
+build/
+.vite/
+
+# Docker
+*.log
+
+# Dados sensíveis / backups locais (não vão pro GitHub)
+backups/*.sql
+backups/*.dump
+
+# Editor / SO
+.vscode/
+.DS_Store
+Thumbs.db

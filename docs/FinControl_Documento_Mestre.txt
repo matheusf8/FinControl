@@ -1,0 +1,886 @@
+FINCONTROL - DOCUMENTO MESTRE DO PROJETO
+
+Este documento descreve o planejamento completo do sistema FinControl,
+um software web de controle financeiro pessoal desenvolvido para
+portfólio profissional. O objetivo é simular o processo utilizado em
+empresas: planejamento, arquitetura, implementação, testes e deploy.
+
+Capítulo 1 - Visão Geral
+
+Objetivo, proposta de valor, público-alvo e escopo.
+
+Seção 1.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 1.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 1.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 1.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 1.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 1.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 1.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 2 - Requisitos Funcionais
+
+Cadastro, login, contas, categorias, receitas, despesas, metas, cartões,
+relatórios.
+
+Seção 2.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 2.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 2.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 2.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 2.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 2.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 2.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 3 - Requisitos Não Funcionais
+
+Segurança, desempenho, responsividade, documentação, testes.
+
+Seção 3.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 3.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 3.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 3.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 3.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 3.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 3.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 4 - Arquitetura
+
+React -> FastAPI -> PostgreSQL.
+
+Seção 4.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 4.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 4.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 4.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 4.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 4.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 4.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 5 - Banco de Dados
+
+Tabelas: users, accounts, transactions, categories, cards, installments,
+goals.
+
+Seção 5.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 5.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 5.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 5.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 5.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 5.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 5.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 6 - API
+
+Endpoints REST para autenticação, usuários, transações, categorias,
+metas e cartões.
+
+Seção 6.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 6.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 6.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 6.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 6.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 6.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 6.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 7 - Frontend
+
+Componentes, páginas, hooks, gerenciamento de estado, formulários.
+
+Seção 7.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 7.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 7.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 7.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 7.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 7.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 7.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 8 - Backend
+
+Camadas routers/services/repositories/models/schemas.
+
+Seção 8.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 8.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 8.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 8.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 8.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 8.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 8.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 9 - Segurança
+
+JWT, hash de senha, validação, autorização.
+
+Seção 9.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 9.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 9.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 9.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 9.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 9.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 9.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 10 - Roadmap
+
+Sprint 1 ao Sprint 8.
+
+Seção 10.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 10.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 10.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 10.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 10.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 10.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 10.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 11 - Deploy
+
+Docker Compose, variáveis de ambiente e hospedagem.
+
+Seção 11.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 11.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 11.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 11.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 11.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 11.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 11.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 12 - README
+
+Guia de instalação e uso.
+
+Seção 12.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 12.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 12.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 12.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 12.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 12.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 12.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Capítulo 13 - Melhorias Futuras
+
+Open Finance, notificações, IA para análise de gastos.
+
+Seção 13.1
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 13.2
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 13.3
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 13.4
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 13.5
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 13.6
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Seção 13.7
+
+-   Objetivo
+-   Implementação
+-   Critérios de aceite
+-   Checklist
+
+Notas: ____________________________________________________________
+
+Checklist Final
+
+[ ] Login [ ] Cadastro [ ] JWT [ ] CRUD Receitas [ ] CRUD Despesas [ ]
+Dashboard [ ] Gráficos [ ] Cartões [ ] Parcelamento [ ] Metas [ ] Docker
+[ ] Deploy [ ] Testes [ ] README
