@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.rate_limit import is_locked, register_failure, register_success
 from app.models.user import User
 from app.schemas.auth import Token, TokenRefreshRequest, UserCreate, UserLogin, UserResponse
 from app.services.auth_service import (
@@ -28,12 +29,25 @@ def register(data: UserCreate, db: Session = Depends(get_db)) -> User:
 
 @router.post("/login", response_model=Token)
 def login(data: UserLogin, db: Session = Depends(get_db)) -> Token:
+    # Rate limit por e-mail (não por IP — é um app local, o IP é sempre o mesmo).
+    rate_limit_key = data.email.lower()
+    remaining = is_locked(rate_limit_key)
+    if remaining is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Muitas tentativas. Tente novamente em {int(remaining // 60) + 1} minuto(s).",
+        )
+
     try:
-        return AuthService(db).login(data.email, data.password)
+        token = AuthService(db).login(data.email, data.password)
     except InvalidCredentialsError as exc:
+        register_failure(rate_limit_key)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="E-mail ou senha incorretos"
         ) from exc
+
+    register_success(rate_limit_key)
+    return token
 
 
 @router.post("/refresh", response_model=Token)

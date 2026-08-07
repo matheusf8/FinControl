@@ -1,4 +1,5 @@
 """Testes de autenticação: registro, login, refresh, rota protegida."""
+from app.core import rate_limit
 
 
 def test_register_creates_user(client):
@@ -102,3 +103,40 @@ def test_refresh_with_access_token_fails(client):
 
     resp = client.post("/api/auth/refresh", json={"refresh_token": access_token})
     assert resp.status_code == 401
+
+
+def test_login_locks_after_too_many_failed_attempts(client):
+    """Rate limit básico: 5 tentativas erradas bloqueia o e-mail por um tempo,
+    mesmo que a próxima tentativa use a senha certa."""
+    email = "bruteforce@example.com"
+    rate_limit.register_success(email)  # garante estado limpo se outro teste usou o mesmo módulo
+    client.post("/api/auth/register", json={"email": email, "password": "senhaCorreta123"})
+
+    for _ in range(rate_limit.MAX_ATTEMPTS):
+        resp = client.post("/api/auth/login", json={"email": email, "password": "senhaErrada"})
+        assert resp.status_code == 401
+
+    resp = client.post("/api/auth/login", json={"email": email, "password": "senhaErrada"})
+    assert resp.status_code == 429
+
+    # bloqueado mesmo com a senha certa
+    resp = client.post("/api/auth/login", json={"email": email, "password": "senhaCorreta123"})
+    assert resp.status_code == 429
+
+    rate_limit.register_success(email)  # limpa pro resto da suite
+
+
+def test_login_rate_limit_is_per_email(client):
+    """Tentativas erradas num e-mail não bloqueiam outro e-mail diferente."""
+    email_a = "vitima-a@example.com"
+    email_b = "vitima-b@example.com"
+    client.post("/api/auth/register", json={"email": email_a, "password": "senhaCorreta123"})
+    client.post("/api/auth/register", json={"email": email_b, "password": "senhaCorreta123"})
+
+    for _ in range(rate_limit.MAX_ATTEMPTS):
+        client.post("/api/auth/login", json={"email": email_a, "password": "senhaErrada"})
+
+    resp = client.post("/api/auth/login", json={"email": email_b, "password": "senhaCorreta123"})
+    assert resp.status_code == 200
+
+    rate_limit.register_success(email_a)

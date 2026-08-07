@@ -4,7 +4,8 @@ from app.models.account import Account
 from app.models.card import Card
 from app.models.category import Category
 from app.models.enums import AccountType, FlowType
+from app.models.goal import Goal
 from app.models.transaction import Transaction
 from app.models.user import User
 
-__all__ = ["Account", "AccountType", "Card", "Category", "FlowType", "Transaction", "User"]
+__all__ = ["Account", "AccountType", "Card", "Category", "FlowType", "Goal", "Transaction", "User"]
