@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.routers import accounts, auth, categories, dashboard, transactions
+from app.routers import accounts, auth, cards, categories, dashboard, transactions
 
 app = FastAPI(title=settings.app_name)
 
@@ -31,6 +31,7 @@ app.include_router(accounts.router, prefix="/api/accounts", tags=["accounts"])
 app.include_router(categories.router, prefix="/api/categories", tags=["categories"])
 app.include_router(transactions.router, prefix="/api/transactions", tags=["transactions"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(cards.router, prefix="/api/cards", tags=["cards"])
 
 # Serve o build do frontend (gerado no Sprint 8) se existir, na raiz "/".
 # Em dev, o frontend roda separado via `npm run dev` (Vite), então essa pasta

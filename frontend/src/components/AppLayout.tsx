@@ -31,6 +31,9 @@ export function AppLayout() {
           <NavLink to="/transactions" className={navLinkClass}>
             Transações
           </NavLink>
+          <NavLink to="/cards" className={navLinkClass}>
+            Cartões
+          </NavLink>
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -44,7 +47,7 @@ export function AppLayout() {
           </button>
         </div>
       </nav>
-      <main className="p-6 max-w-4xl mx-auto">
+      <main className="p-6 max-w-5xl mx-auto">
         <Outlet />
       </main>
     </div>
