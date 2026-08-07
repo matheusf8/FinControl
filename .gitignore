@@ -16,12 +16,18 @@ dist/
 build/
 .vite/
 
-# Docker
-*.log
+# Banco de dados local (dados pessoais, não vão pro GitHub)
+*.db
+*.sqlite
+*.sqlite3
+backend/app/static/
 
-# Dados sensíveis / backups locais (não vão pro GitHub)
-backups/*.sql
-backups/*.dump
+# Empacotamento (PyInstaller)
+desktop/build/
+desktop/dist/
+*.spec.bak
+
+*.log
 
 # Editor / SO
 .vscode/

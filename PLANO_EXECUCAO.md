@@ -1,8 +1,8 @@
 # FinControl — Plano de Execução
 
-Projeto de portfólio: sistema web de controle financeiro pessoal.
-Stack: **React (Vite) → FastAPI → PostgreSQL**, com Docker e deploy em produção.
-Repositório: `github.com/matheusf8/sistema-financeiro` (a criar).
+Projeto pessoal: sistema de controle financeiro que roda **local, como programa de desktop** (um `.exe`, sem instalar nada, sem publicar nada na internet).
+Stack: **React (Vite) → FastAPI → SQLite**, empacotado num executável único com PyInstaller + pywebview.
+Repositório: `github.com/matheusf8/sistema-financeiro` — pode ficar **privado**, é só backup do código-fonte, não precisa publicar nada.
 
 ---
 
@@ -15,6 +15,7 @@ Repositório: `github.com/matheusf8/sistema-financeiro` (a criar).
 - React Query (dados do servidor) + Zustand (estado local/auth)
 - React Hook Form + Zod (formulários e validação)
 - Recharts (gráficos do dashboard)
+- Build final: arquivos estáticos (`npm run build`), servidos pelo próprio backend — não roda mais como servidor de dev separado no produto final
 
 **Backend**
 - Python 3.12 + FastAPI
@@ -23,14 +24,20 @@ Repositório: `github.com/matheusf8/sistema-financeiro` (a criar).
 - JWT (access + refresh token) com passlib/bcrypt para hash de senha
 - Arquitetura em camadas: `routers → services → repositories → models/schemas`
 
-**Infra**
-- PostgreSQL
-- Docker + Docker Compose (uso 100% local — sem publicação na internet)
-- GitHub Actions (CI: lint + testes a cada push, só validação — não publica nada)
+**Banco de dados**
+- **SQLite** — um arquivo `.db` local, sem servidor separado (trocamos PostgreSQL por isso: mais simples de empacotar num `.exe`, e o app é de uso pessoal/single-user, então não perde nada relevante)
+
+**Empacotamento final (em vez de Docker)**
+- **pywebview** — abre o app numa janela nativa do Windows (sem precisar de navegador aberto)
+- **PyInstaller** — empacota o backend Python (FastAPI + Uvicorn + SQLite) num `.exe` único, sem precisar de Python instalado na máquina
+- Resultado: uma pasta com `FinControl.exe` + arquivos de suporte + `fincontrol.db`, portátil — copia pra qualquer PC Windows e roda
 
 **Testes**
 - Backend: pytest + httpx
 - Frontend: Vitest + React Testing Library
+
+**CI**
+- GitHub Actions: roda lint + testes a cada push (só validação, não publica nada, não builda o `.exe` automaticamente por enquanto)
 
 ---
 
@@ -46,11 +53,12 @@ sistema-financeiro/
 │   │   ├── repositories/  # acesso ao banco
 │   │   ├── services/      # regras de negócio
 │   │   ├── routers/       # endpoints REST
+│   │   ├── static/        # build do frontend entra aqui na hora de empacotar
 │   │   └── main.py
 │   ├── alembic/
 │   ├── tests/
 │   ├── requirements.txt
-│   └── Dockerfile
+│   └── fincontrol.db      # banco SQLite (fora do git)
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -58,10 +66,12 @@ sistema-financeiro/
 │   │   ├── hooks/
 │   │   ├── services/       # cliente da API
 │   │   └── store/
-│   └── Dockerfile
+│   └── package.json
+├── desktop/                 # empacotamento final
+│   ├── launcher.py          # abre a janela pywebview + sobe o backend
+│   └── build.spec           # config do PyInstaller
 ├── docs/                    # documento mestre, ADRs, etc.
 ├── .github/workflows/ci.yml
-├── docker-compose.yml
 ├── .env.example
 └── README.md
 ```
@@ -77,14 +87,14 @@ O documento mestre original cobre 13 capítulos e recursos avançados (Open Fina
 ## Sprints
 
 ### Sprint 1 — Setup do projeto
-- Criar repositório no GitHub (`matheusf8/sistema-financeiro`), branch `main` protegida + `dev`
-- Estrutura de pastas (backend/frontend), Docker Compose com Postgres + backend + frontend
+- Criar repositório no GitHub (`matheusf8/sistema-financeiro`, pode ser privado), branch `main` protegida + `dev`
+- Estrutura de pastas (backend/frontend), venv Python + `requirements.txt`, scaffold do Vite + dependências do frontend
 - `.env.example`, `.gitignore`, README inicial
 - GitHub Actions básico (roda lint em cada push)
-- **Aceite:** `docker compose up` sobe os 3 serviços sem erro
+- **Aceite:** backend sobe com `uvicorn app.main:app --reload` e frontend com `npm run dev`, ambos sem erro
 
 ### Sprint 2 — Backend: fundação + autenticação
-- Modelos `User`, configuração do SQLAlchemy + Alembic (primeira migration)
+- Modelo `User`, configuração do SQLAlchemy + Alembic (primeira migration) apontando pro SQLite
 - Endpoints de registro, login, refresh token (JWT), hash de senha
 - Middleware de autorização (rotas protegidas)
 - Testes de auth com pytest
@@ -117,39 +127,41 @@ O documento mestre original cobre 13 capítulos e recursos avançados (Open Fina
 ### Sprint 7 — Metas + qualidade (não funcionais)
 - Modelo `Goal`, CRUD de metas com progresso visual
 - Cobertura de testes (backend e frontend) nos fluxos críticos
-- Validações de entrada, tratamento de erros, responsividade mobile
-- Revisão de segurança (rate limiting básico, CORS, variáveis sensíveis fora do código)
-- **Aceite:** suite de testes passando no CI, app usável no celular
+- Validações de entrada, tratamento de erros, responsividade da janela
+- Revisão de segurança básica (variáveis sensíveis fora do código)
+- **Aceite:** suite de testes passando no CI
 
-### Sprint 8 — Empacotamento local e documentação
-- Docker Compose "de produção" para uso local (build otimizado, variáveis de ambiente separadas de dev)
-- Sem publicação na internet: o projeto roda 100% na sua máquina com `docker compose up`
-- README completo (setup local passo a passo, prints, stack, como rodar testes) — importante pro repo ficar bom no GitHub mesmo sem link ao vivo
-- Seed de dados de demonstração, para abrir o app já com dados de exemplo
-- **Aceite:** qualquer pessoa que clonar o repo consegue rodar `docker compose up` e usar o app localmente em poucos passos, sem precisar de nenhuma conta externa
+### Sprint 8 — Empacotamento em .exe
+- Build do frontend (`npm run build`) copiado pra dentro de `backend/app/static/`
+- `desktop/launcher.py`: sobe o FastAPI (Uvicorn) em background + abre janela pywebview apontando pra ele
+- `desktop/build.spec` + PyInstaller: gera `FinControl.exe` numa pasta portátil (`dist/FinControl/`)
+- Testar rodando o `.exe` de uma pasta fora do ambiente de desenvolvimento (simulando "outro PC")
+- README completo (como rodar em dev, como gerar o `.exe`, como usar)
+- Seed de dados de demonstração opcional
+- **Aceite:** clicar em `FinControl.exe` abre o app numa janela, sem terminal, sem instalar nada, com os dados salvos em `fincontrol.db` na mesma pasta
 
 ---
 
 ## Fluxo de trabalho: quem faz o quê
 
-- **Eu (assistente) edito os arquivos** direto nesta pasta (código, docs, configs) — isso funciona normalmente.
-- **Comandos de Git (`init`, `add`, `commit`, `push`) rodam no terminal do VSCode, por você** — o ambiente sandbox onde eu executo comandos não consegue manipular os arquivos internos do `.git` nesta pasta (é sincronizada via OneDrive, e essa combinação trava operações do Git). Sempre que tiver algo pronto pra commitar, eu aviso e passo os comandos exatos pra colar no terminal.
+- **Eu (assistente) edito os arquivos e rodo git direto nesta pasta** (código, docs, configs, `add`/`commit`) — isso funciona normalmente (confirmado em 2026-08-07).
+- **`git push`** ainda depende de você (autenticação com o GitHub não está disponível pro assistente).
+- Nota histórica: um `.git/index.lock` órfão (de um commit interrompido) chegou a travar `add`/`commit` uma vez — não é uma limitação real do OneDrive, só um lock que precisou ser removido manualmente. Se acontecer de novo, é só apagar `.git/index.lock` (confirmando antes que não há processo `git` rodando).
+
+---
 
 ## Portabilidade entre computadores
 
-**Por que é preciso um passo extra:** o Postgres guarda os dados num volume interno do Docker, escondido no sistema — não é um arquivo dentro da pasta `sistema-financeiro`. O OneDrive só sincroniza o que está literalmente dentro da pasta, então ele nunca vê (nem sincroniza) esses dados. O código, sim, viaja sozinho: está no GitHub, então `git clone` + `docker compose up` funciona em qualquer PC — só que com um banco **novo e vazio**.
+Como o banco agora é **SQLite** (um arquivo `.db` dentro da própria pasta do projeto, não um volume escondido do Docker), a portabilidade fica bem mais simples do que era com Postgres:
 
-**Solução:** manter Postgres (bom pro portfólio) + scripts de backup/restore que exportam os dados para um arquivo `.sql` normal, salvo dentro da pasta do projeto (`backups/`, fora do Git via `.gitignore`, mas dentro do OneDrive — esse arquivo sim sincroniza sozinho entre PCs):
-- `backup.sh` / `backup.bat` — roda `pg_dump` e salva um `.sql` em `backups/`
-- `restore.sh` / `restore.bat` — roda `pg_restore`/`psql` a partir do último backup
+- Essa pasta (`sistema-financeiro`) já está dentro do **OneDrive** (`Desktop\area_trabalho\pasta\...`), que sincroniza sozinho com a nuvem e com qualquer outro PC logado na mesma conta Microsoft.
+- Depois de empacotado (Sprint 8), a pasta final (`FinControl.exe` + `fincontrol.db`) pode ficar dentro dessa mesma estrutura sincronizada — então ao trocar de computador, é só logar com a mesma conta Microsoft, esperar o OneDrive baixar os arquivos, e o programa (com todos os dados) já está lá.
+- Também dá pra copiar a pasta inteira pra um **pen drive** a qualquer momento como backup extra ou pra usar num PC sem essa conta Microsoft — funciona igual, é só uma pasta portátil.
+- **Cuidado:** não abrir o mesmo `FinControl.exe` em dois PCs ao mesmo tempo — o SQLite trava se dois processos tentarem escrever no arquivo ao mesmo tempo. Combina bem com o uso real (um PC de cada vez).
 
-**Fluxo passo a passo ao trocar de computador:**
-1. No PC A, termina de usar o app e roda `backup` → gera `backups/backup_2026-08-06.sql`.
-2. Espera o OneDrive sincronizar (ícone verde).
-3. No PC B, roda `git pull` (código) + `docker compose up` (sobe um banco novo vazio).
-4. Roda `restore` no PC B → lê o `.sql` mais recente e recria os dados.
+Isso substitui o processo antigo de backup/restore manual com `pg_dump`/`psql` — não é mais necessário.
 
-**Importante:** isso não é sincronização em tempo real (não é tipo Google Docs). É manual — só funciona se você lembrar de rodar backup antes de trocar de PC e restore depois. Se usar o app em dois PCs sem fazer esse processo no meio, um lançamento pode se perder. Na prática, funciona bem usando um computador de cada vez e seguindo essa rotina. Isso entra no Sprint 8 (empacotamento local).
+---
 
 ## Depois do MVP (backlog futuro)
 - Open Finance (integração bancária)
@@ -161,4 +173,4 @@ Esses ficam fora dos 8 sprints — só entram se sobrar tempo/energia depois do 
 ---
 
 ## Checklist final (do documento mestre)
-`[ ] Login [ ] Cadastro [ ] JWT [ ] CRUD Receitas [ ] CRUD Despesas [ ] Dashboard [ ] Gráficos [ ] Cartões [ ] Parcelamento [ ] Metas [ ] Docker [ ] Deploy [ ] Testes [ ] README`
+`[ ] Login [ ] Cadastro [ ] JWT [ ] CRUD Receitas [ ] CRUD Despesas [ ] Dashboard [ ] Gráficos [ ] Cartões [ ] Parcelamento [ ] Metas [ ] Empacotamento .exe [ ] Testes [ ] README`
