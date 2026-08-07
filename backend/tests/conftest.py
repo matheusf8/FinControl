@@ -36,3 +36,18 @@ def client(db_session):
     with TestClient(fastapi_app) as test_client:
         yield test_client
     fastapi_app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def auth_headers(client):
+    """Registra e loga um usuário, retorna os headers já com o Bearer token
+    (a maioria dos testes de contas/categorias/transações precisa disso)."""
+    client.post(
+        "/api/auth/register",
+        json={"email": "fixture@example.com", "password": "senha1234", "full_name": "Fixture"},
+    )
+    login_resp = client.post(
+        "/api/auth/login", json={"email": "fixture@example.com", "password": "senha1234"}
+    )
+    token = login_resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
