@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { toApiAmount } from '../lib/money'
 import { accountService } from '../services/financeService'
 import type { AccountType } from '../types/finance'
 
@@ -60,7 +61,7 @@ export function AccountsPage() {
     createMutation.mutate({
       name: data.name,
       type: data.type,
-      initial_balance: data.initialBalance || '0',
+      initial_balance: (data.initialBalance && toApiAmount(data.initialBalance)) || '0',
     })
   }
 
@@ -111,7 +112,7 @@ export function AccountsPage() {
           </label>
           <input
             id="initialBalance"
-            placeholder="0.00"
+            placeholder="0,00"
             className="mt-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
             {...register('initialBalance')}
           />

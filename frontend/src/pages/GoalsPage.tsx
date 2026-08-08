@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { parseMoneyInput, toApiAmount } from '../lib/money'
 import { goalService } from '../services/goalService'
 import type { Goal } from '../types/goal'
 
@@ -15,7 +16,7 @@ const goalSchema = z.object({
   targetAmount: z
     .string()
     .min(1, 'Informe o valor')
-    .refine((v) => Number(v) > 0, 'O valor precisa ser maior que zero'),
+    .refine((v) => parseMoneyInput(v) > 0, 'O valor precisa ser maior que zero'),
   targetDate: z.string().optional(),
 })
 type GoalForm = z.infer<typeof goalSchema>
@@ -34,6 +35,16 @@ function GoalCard({ goal }: { goal: Goal }) {
     },
     onError: () => setError('Não foi possível registrar (o valor não pode deixar a meta negativa)'),
   })
+
+  const handleContribute = () => {
+    const parsed = parseMoneyInput(contributeValue)
+    if (!Number.isFinite(parsed) || parsed === 0) {
+      setError('Informe um valor válido (ex: 100,00 ou -50,00)')
+      return
+    }
+    setError(null)
+    contributeMutation.mutate(parsed.toFixed(2))
+  }
 
   const deleteMutation = useMutation({
     mutationFn: () => goalService.remove(goal.id),
@@ -81,13 +92,13 @@ function GoalCard({ goal }: { goal: Goal }) {
         <input
           value={contributeValue}
           onChange={(e) => setContributeValue(e.target.value)}
-          placeholder="valor (ex: 100 ou -50)"
+          placeholder="valor (ex: 100,00 ou -50,00)"
           className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100"
         />
         <button
           type="button"
           disabled={!contributeValue || contributeMutation.isPending}
-          onClick={() => contributeMutation.mutate(contributeValue)}
+          onClick={handleContribute}
           className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white font-medium hover:bg-indigo-700 disabled:opacity-50"
         >
           Registrar
@@ -127,7 +138,7 @@ export function GoalsPage() {
     setError(null)
     createMutation.mutate({
       name: data.name,
-      target_amount: data.targetAmount,
+      target_amount: toApiAmount(data.targetAmount) ?? data.targetAmount,
       target_date: data.targetDate || undefined,
     })
   }
@@ -163,7 +174,7 @@ export function GoalsPage() {
           </label>
           <input
             id="targetAmount"
-            placeholder="5000.00"
+            placeholder="5000,00"
             className="mt-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
             {...register('targetAmount')}
           />

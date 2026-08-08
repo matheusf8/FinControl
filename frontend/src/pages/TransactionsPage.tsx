@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { parseMoneyInput, toApiAmount } from '../lib/money'
 import { accountService, categoryService, transactionService } from '../services/financeService'
 import type { FlowType, TransactionFilters } from '../types/finance'
 
@@ -13,7 +14,7 @@ const transactionSchema = z.object({
   amount: z
     .string()
     .min(1, 'Informe o valor')
-    .refine((v) => Number(v) > 0, 'O valor precisa ser maior que zero'),
+    .refine((v) => parseMoneyInput(v) > 0, 'O valor precisa ser maior que zero'),
   description: z.string().max(255).optional(),
   date: z.string().min(1, 'Informe a data'),
 })
@@ -86,7 +87,7 @@ export function TransactionsPage() {
       account_id: data.accountId,
       category_id: data.categoryId || undefined,
       type: data.type,
-      amount: data.amount,
+      amount: toApiAmount(data.amount) ?? data.amount,
       description: data.description || undefined,
       date: new Date(data.date).toISOString(),
     })
@@ -175,7 +176,7 @@ export function TransactionsPage() {
             </label>
             <input
               id="amount"
-              placeholder="0.00"
+              placeholder="0,00"
               className="mt-1 w-28 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
               {...register('amount')}
             />

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { parseMoneyInput, toApiAmount } from '../lib/money'
 import { cardService } from '../services/cardService'
 import { categoryService } from '../services/financeService'
 
@@ -46,7 +47,7 @@ const purchaseSchema = z.object({
   totalAmount: z
     .string()
     .min(1, 'Informe o valor')
-    .refine((v) => Number(v) > 0, 'O valor precisa ser maior que zero'),
+    .refine((v) => parseMoneyInput(v) > 0, 'O valor precisa ser maior que zero'),
   installments: z
     .string()
     .min(1, 'Informe as parcelas')
@@ -117,7 +118,7 @@ export function CardsPage() {
       return cardService.createPurchase(selectedCardId, {
         description: data.description || undefined,
         category_id: data.categoryId || undefined,
-        total_amount: data.totalAmount,
+        total_amount: toApiAmount(data.totalAmount) ?? data.totalAmount,
         installments: Number(data.installments),
         purchase_date: data.purchaseDate,
       })
@@ -151,7 +152,7 @@ export function CardsPage() {
             name: data.name,
             closing_day: Number(data.closingDay),
             due_day: Number(data.dueDay),
-            limit: data.limit || '0',
+            limit: (data.limit && toApiAmount(data.limit)) || '0',
           }),
         )}
         noValidate
@@ -209,7 +210,7 @@ export function CardsPage() {
           </label>
           <input
             id="limit"
-            placeholder="0.00"
+            placeholder="0,00"
             className="mt-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
             {...cardForm.register('limit')}
           />
@@ -314,7 +315,7 @@ export function CardsPage() {
               </label>
               <input
                 id="totalAmount"
-                placeholder="0.00"
+                placeholder="0,00"
                 className="mt-1 w-28 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
                 {...purchaseForm.register('totalAmount')}
               />
