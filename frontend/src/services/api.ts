@@ -3,7 +3,13 @@ import { useAuthStore } from '../store/authStore'
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean }
 
-export const api = axios.create({ baseURL: '/api' })
+// Em dev/`.exe`, front e back são a mesma origem — VITE_API_URL fica vazio e
+// isso continua batendo em '/api' relativo (proxy do Vite ou mesmo servidor).
+// Hospedado (Vercel + Render), VITE_API_URL aponta pra URL do backend, já
+// que são origens diferentes.
+const API_BASE_URL = `${import.meta.env.VITE_API_URL ?? ''}/api`
+
+export const api = axios.create({ baseURL: API_BASE_URL })
 
 // Anexa o access token em toda request.
 api.interceptors.request.use((config) => {
@@ -22,7 +28,7 @@ async function refreshAccessToken(): Promise<string> {
   if (!refreshToken) throw new Error('Sem refresh token')
 
   // axios "cru" (não `api`) pra não entrar de novo no interceptor de request/response
-  const { data } = await axios.post('/api/auth/refresh', { refresh_token: refreshToken })
+  const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken })
   useAuthStore.getState().setTokens({ accessToken: data.access_token, refreshToken: data.refresh_token })
   return data.access_token as string
 }

@@ -24,11 +24,12 @@ if settings.secret_key == "change-me-in-.env":  # valor padrão de app/core/conf
 
 app = FastAPI(title=settings.app_name)
 
-# CORS liberado só pro frontend em dev (Vite); no .exe final, front e back
-# são servidos pela mesma origem, então isso nem entra em jogo.
+# CORS: origens configuradas em settings.cors_origins (env var CORS_ORIGINS).
+# No .exe/dev, front e back são servidos pela mesma origem e isso nem entra em
+# jogo; hospedado (Vercel + Render), precisa listar o domínio do frontend.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

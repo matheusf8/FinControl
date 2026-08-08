@@ -1,10 +1,10 @@
 """Endpoints de autenticação: registro, login, refresh, usuário atual."""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.rate_limit import is_locked, register_failure, register_success
+from app.core.rate_limit import is_locked, register_attempt, register_failure, register_success
 from app.models.user import User
 from app.schemas.auth import Token, TokenRefreshRequest, UserCreate, UserLogin, UserResponse
 from app.services.auth_service import (
@@ -18,7 +18,21 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(data: UserCreate, db: Session = Depends(get_db)) -> User:
+def register(data: UserCreate, request: Request, db: Session = Depends(get_db)) -> User:
+    # Rate limit por IP (não por e-mail — quem ataca controla o e-mail que
+    # manda). Só importa com cadastro aberto pra internet: sem isso, um bot
+    # conseguiria criar contas em massa sem limite.
+    client_host = request.client.host if request.client else "unknown"
+    rate_limit_key = f"register:{client_host}"
+    remaining = is_locked(rate_limit_key)
+    if remaining is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Muitas tentativas. Tente novamente em {int(remaining // 60) + 1} minuto(s).",
+        )
+
+    # Toda tentativa conta pro limite (sucesso incluso — ver register_attempt).
+    register_attempt(rate_limit_key)
     try:
         return AuthService(db).register(data)
     except EmailAlreadyRegisteredError as exc:

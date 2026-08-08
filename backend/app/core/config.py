@@ -62,9 +62,18 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
 
+    # CORS: origens liberadas a chamar a API, separadas por vírgula. Default
+    # cobre só o Vite em dev — em produção hospedada (Render), setar via env
+    # var pra incluir o domínio do frontend (ex: https://fincontrol.vercel.app).
+    cors_origins: str = "http://localhost:5173"
+
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"), env_file_encoding="utf-8", extra="ignore"
     )
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 settings = Settings()

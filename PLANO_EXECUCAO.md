@@ -140,6 +140,22 @@ O usuário já está usando o `.exe` de verdade e reportando problemas de uso re
 
 **Nota:** o susto do "banco sumiu" foi falso alarme — o usuário tinha movido a pasta de `Desktop\FinControl` pra `Desktop\area_trabalho\FinControl` (prefere manter tudo junto), não foi apagado por antivírus nem nada. Mas o risco real (meu processo apagar dados numa atualização futura) era genuíno e ficou corrigido de qualquer forma.
 
+- **Migração pra hospedado (2026-08-08)** — usuário decidiu reverter a proposta original ("100%
+  local/privado") e colocar o FinControl sempre no ar na internet, acessível de qualquer lugar
+  (não só Wi-Fi de casa), abandonando o `.exe` como uso principal, com cadastro aberto (mais de um
+  usuário pode se cadastrar). Escolha de hospedagem: **Vercel** (frontend) + **Render** (backend) +
+  **Neon** (Postgres — usado em vez do Postgres grátis do próprio Render porque esse expira em 30
+  dias; o do Neon é gratuito sem expirar). Mudanças: `backend/app/core/database.py` aceita
+  Postgres além de SQLite (SQLite continua default em dev/testes); CORS virou configurável via env
+  var `CORS_ORIGINS` em vez de hardcoded pra `localhost:5173`; rate limit (já existente, só no
+  login) passou a valer também no `/register`, por IP — necessário porque cadastro aberto pra
+  internet sem isso permite bot criar contas em massa; `SECRET_KEY` passa a ser env var setada
+  manualmente no Render (o truque de auto-gerar `.env` ao lado do `.exe` não serve pra lá, disco é
+  efêmero no plano grátis); frontend usa `VITE_API_URL` pra apontar pro backend (antes era mesma
+  origem, `.exe`/dev). Passo a passo completo de deploy em [docs/DEPLOY.md](./docs/DEPLOY.md).
+  Trade-off aceito: no plano grátis do Render o backend "dorme" após ~15 min sem acesso, ~30-50s
+  pra acordar na próxima visita — dá pra tirar isso com o plano pago (~$7/mês) depois, se incomodar.
+
 ---
 
 ## Fluxo de trabalho: quem faz o quê

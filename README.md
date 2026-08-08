@@ -1,10 +1,12 @@
 # FinControl
 
-Sistema de controle financeiro pessoal — programa de desktop, uso local, sem publicação na internet.
+Sistema de controle financeiro pessoal — hospedado na internet, acessível de qualquer lugar.
 
-**Stack:** React (Vite) + FastAPI + SQLite, empacotado como executável único (`.exe`) com PyInstaller + pywebview.
+**Stack:** React (Vite) no [Vercel](https://vercel.com) + FastAPI no [Render](https://render.com) + Postgres no [Neon](https://neon.tech). Também existe um empacotamento local em `.exe` (PyInstaller + pywebview + SQLite) em `desktop/`, mantido no repositório mas não é mais o jeito recomendado de usar.
 
-> ✅ **MVP completo (Sprints 1–8):** autenticação, contas, categorias, transações, dashboard com gráficos, cartões com parcelamento, metas, modo escuro e empacotamento em `.exe`. Veja o [plano de execução](./PLANO_EXECUCAO.md) completo.
+> ✅ **MVP completo (Sprints 1–8):** autenticação, contas, categorias, transações, dashboard com gráficos, cartões com parcelamento, metas, modo escuro. Veja o [plano de execução](./PLANO_EXECUCAO.md) completo.
+>
+> 🌐 **Migração pra hospedado (pós-MVP):** saiu do `.exe` local pra rodar sempre no ar, com cadastro aberto. Veja [docs/DEPLOY.md](./docs/DEPLOY.md) pro passo a passo de deploy.
 
 ## Funcionalidades
 
@@ -16,26 +18,20 @@ Sistema de controle financeiro pessoal — programa de desktop, uso local, sem p
 - **Metas financeiras** — com barra de progresso e registro de contribuições
 - **Modo escuro** — com toggle manual, persistido
 - **Responsivo** — funciona também no celular
-- **Programa de desktop** — roda como `.exe`, sem terminal, sem instalar nada
+- **Hospedado** — acessível de qualquer lugar com internet, sem depender do PC ligado
 
-## Como usar (só abrir o programa)
+## Como usar
 
-Se você já tem a pasta `FinControl/` gerada (ver "Como gerar o `.exe`" abaixo), é só:
+O FinControl roda hospedado (Vercel + Render + Neon) — basta abrir a URL do frontend no navegador
+(celular ou computador), cadastrar uma conta e usar. Veja [docs/DEPLOY.md](./docs/DEPLOY.md) pra
+como fazer (ou refazer) esse deploy do zero.
 
-1. Clicar duas vezes em `FinControl.exe`
-2. Pronto — abre numa janela, sem terminal. Na primeira vez, ele cria sozinho o banco de dados (`fincontrol.db`) e a chave de segurança (`.env`) do lado do `.exe`
-3. Pra usar em outro PC (ou guardar no pen drive), é só copiar a pasta `FinControl/` inteira — os dados vão junto
+## Versão local em `.exe` (legado)
 
-## Como usar pelo celular (mesma rede Wi-Fi)
-
-Com o FinControl aberto no PC, ele também aceita acesso de outros aparelhos na mesma rede Wi-Fi:
-
-1. Abra a pasta do programa e leia o arquivo **`Acesse pelo celular.txt`** (criado/atualizado toda vez que o programa abre) — ele tem o endereço certo pra digitar
-2. No celular (na mesma Wi-Fi do PC), abra o navegador e acesse esse endereço (algo como `http://192.168.x.x:8756`)
-3. Faça login normalmente — a sessão do celular é separada da sessão da janela do PC
-4. Na primeira vez, o Windows pode perguntar se libera o FinControl na rede — clique em **"Permitir acesso"**
-
-Só funciona com o PC ligado e o programa aberto, e só dentro da mesma rede Wi-Fi (não funciona longe de casa/com dados móveis — isso exigiria hospedar o backend na internet, o que muda a proposta 100% local/privada do projeto).
+O projeto começou 100% local/offline, empacotado como `.exe` de desktop (`desktop/`) — esse modo
+continua no repositório e funciona, mas não é mais o jeito recomendado de usar desde a migração
+pra hospedado. Detalhes de como gerar e rodar o `.exe` ficam no final deste README, seção
+"Como gerar o `.exe` (legado)".
 
 ## Como rodar (desenvolvimento)
 
@@ -70,7 +66,7 @@ cd frontend
 npm run test
 ```
 
-## Como gerar o `.exe`
+## Como gerar o `.exe` (legado)
 
 ```powershell
 # 1. Build do frontend
@@ -99,7 +95,7 @@ Se algo der errado ao abrir o `.exe` (não deveria, mas caso aconteça), o diagn
 
 ## Estrutura
 
-- `backend/` — API em FastAPI + banco SQLite local
+- `backend/` — API em FastAPI (Postgres em produção via `DATABASE_URL`, SQLite em dev/testes)
 - `frontend/` — interface em React
-- `desktop/` — empacotamento final (`launcher.py`, `build.spec`, `icon.ico`)
-- `docs/` — documentação do projeto
+- `desktop/` — empacotamento local em `.exe` (legado: `launcher.py`, `build.spec`, `icon.ico`)
+- `docs/` — documentação do projeto, incluindo [DEPLOY.md](./docs/DEPLOY.md)

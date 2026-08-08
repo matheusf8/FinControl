@@ -37,3 +37,12 @@ def register_failure(key: str) -> None:
 def register_success(key: str) -> None:
     _attempts.pop(key, None)
     _locked_until.pop(key, None)
+
+
+def register_attempt(key: str) -> None:
+    """Conta a tentativa independente do resultado (sucesso ou falha) —
+    usado no /register: diferente do /login (onde só falha conta, pra não
+    travar o dono da conta por errar a senha), aqui um cadastro bem-sucedido
+    também deve contar pro limite, senão um bot só precisa usar e-mails
+    diferentes a cada tentativa pra nunca travar."""
+    register_failure(key)

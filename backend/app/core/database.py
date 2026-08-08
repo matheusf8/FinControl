@@ -7,10 +7,12 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from app.core.config import settings
 
 # check_same_thread=False é necessário pro SQLite funcionar com o FastAPI
-# (cada request pode ser tratada numa thread diferente)
+# (cada request pode ser tratada numa thread diferente) — mas é um argumento
+# específico do driver sqlite3, o psycopg2 (Postgres) não aceita/precisa dele.
+_is_sqlite = settings.database_url.startswith("sqlite")
 engine = create_engine(
     settings.database_url,
-    connect_args={"check_same_thread": False},
+    connect_args={"check_same_thread": False} if _is_sqlite else {},
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

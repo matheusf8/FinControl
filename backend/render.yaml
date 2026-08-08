@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: fincontrol-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt && alembic upgrade head"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      # Cole aqui pelo dashboard do Render (não commitar valores reais):
+      # - SECRET_KEY: chave gerada com `python -c "import secrets; print(secrets.token_hex(32))"`
+      # - DATABASE_URL: connection string do Postgres (Neon) — algo como
+      #   postgresql://usuario:senha@ep-xxx.neon.tech/fincontrol?sslmode=require
+      # - CORS_ORIGINS: URL do frontend no Vercel, ex: https://fincontrol.vercel.app
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+    healthCheckPath: /api/health

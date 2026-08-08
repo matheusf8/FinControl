@@ -7,8 +7,22 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401 — garante que todos os models registram em Base.metadata
+from app.core import rate_limit
 from app.core.database import Base, get_db
 from app.main import app as fastapi_app
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limit():
+    """O rate limiter guarda estado em dicts a nível de módulo (propositalmente,
+    é em memória mesmo em produção — ver app/core/rate_limit.py). Sem resetar
+    entre testes, o TestClient sempre bate com o mesmo "IP", e testes que
+    registram/logam repetidamente acabariam se travando uns aos outros."""
+    rate_limit._attempts.clear()
+    rate_limit._locked_until.clear()
+    yield
+    rate_limit._attempts.clear()
+    rate_limit._locked_until.clear()
 
 
 @pytest.fixture()
