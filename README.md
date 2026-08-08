@@ -86,7 +86,14 @@ cd ..\desktop
 ..\backend\.venv\Scripts\pyinstaller.exe build.spec --noconfirm
 ```
 
-O resultado fica em `desktop/dist/FinControl/` — a pasta inteira é o programa (`FinControl.exe` + arquivos de suporte). Copie ela pra onde quiser usar.
+O resultado fica em `desktop/dist/FinControl/` — a pasta inteira é o programa (`FinControl.exe` + arquivos de suporte).
+
+**Pra atualizar uma cópia já em uso** (que já tem `fincontrol.db` com dados de verdade), **não copie a pasta inteira por cima** — isso apaga o banco. Use o script que só troca o programa, preservando os dados, e ainda faz backup automático:
+
+```powershell
+# Edite a variável $dst dentro do script pra apontar pra sua cópia em uso
+.\update-desktop-copy.ps1
+```
 
 Se algo der errado ao abrir o `.exe` (não deveria, mas caso aconteça), o diagnóstico fica em `launcher.log`, criado do lado do `.exe`.
 
