@@ -6,9 +6,11 @@ Repositório: `github.com/matheusf8/sistema-financeiro` — pode ficar **privado
 
 ## Status atual (2026-08-07)
 
-**Sprints 1–8 concluídas — projeto fechado.** MVP funcional completo — auth, contas/categorias/transações, dashboard com gráficos, cartões com parcelamento, metas, modo escuro, rate limiting, responsividade mobile, e empacotado num `.exe` de verdade (janela nativa, sem terminal, ícone próprio). 64 testes (todos verdes). Commits locais no `main` (falta só `git push`, que é manual — ver seção "Fluxo de trabalho").
+**Sprints 1–8 concluídas — projeto fechado e em uso real.** MVP funcional completo — auth, contas/categorias/transações, dashboard com gráficos, cartões com parcelamento, metas, modo escuro, rate limiting, responsividade mobile, e empacotado num `.exe` de verdade (janela nativa, sem terminal, ícone próprio). 64 testes de backend + 13 de frontend (todos verdes). Commits locais no `main` (falta só `git push`, que é manual — ver seção "Fluxo de trabalho").
 
 **Testado de ponta a ponta:** `FinControl.exe` rodando de uma pasta fora do ambiente de dev (simulando outro PC) — abre a janela, cria `fincontrol.db` e `.env` sozinho, backend responde, frontend carrega e navega certinho.
+
+**Cópia em uso real do usuário:** `C:\Users\mathe\OneDrive\Desktop\area_trabalho\FinControl\` (ele prefere manter tudo dentro de `area_trabalho`, não direto na raiz da Área de Trabalho). Ver "Pós-lançamento" abaixo pra como atualizar essa cópia sem perder dados.
 
 ---
 
@@ -40,8 +42,8 @@ Repositório: `github.com/matheusf8/sistema-financeiro` — pode ficar **privado
 - Resultado: uma pasta com `FinControl.exe` + arquivos de suporte + `fincontrol.db`, portátil — copia pra qualquer PC Windows e roda
 
 **Testes**
-- Backend: pytest + httpx — 63 testes (auth, contas, categorias, transações, dashboard, cartões/parcelamento, metas)
-- Frontend: Vitest + React Testing Library — 6 testes (fluxo de auth/rotas protegidas)
+- Backend: pytest + httpx — 64 testes (auth, contas, categorias, transações, dashboard, cartões/parcelamento, metas)
+- Frontend: Vitest + React Testing Library — 13 testes (fluxo de auth/rotas protegidas + utilitário de valores monetários)
 - Validação manual no navegador em toda sprint, além dos testes automatizados (pegou bugs reais que os testes não cobriam)
 
 **CI**
@@ -125,6 +127,18 @@ Model `Goal` com progresso visual, rate limiting no login, aviso de SECRET_KEY p
 - `desktop/build.spec` + PyInstaller (modo `--onedir`, sem terminal, ícone próprio): gera `FinControl.exe`
 - Testado rodando de uma pasta fora do ambiente de dev (simulando "outro PC"): abre, cria banco+`.env` sozinho, backend responde, frontend carrega
 - **Aceite:** clicar em `FinControl.exe` abre o app numa janela, sem terminal, sem instalar nada, com os dados salvos em `fincontrol.db` na mesma pasta ✅
+
+---
+
+## Pós-lançamento (uso real, depois da Sprint 8)
+
+O usuário já está usando o `.exe` de verdade e reportando problemas de uso real — sinal de que o projeto cumpriu o objetivo. Fixes aplicados até agora:
+
+- **`8e8eb2e`** — campos de valor (contas, transações, cartões, metas) só aceitavam formato internacional (`1356.92`), rejeitando o formato brasileiro (`1.356,92`) como se estivesse vazio. Criado `frontend/src/lib/money.ts` (`parseMoneyInput`/`toApiAmount`), aplicado em todas as telas com campo de dinheiro. 7 testes novos.
+- **`429f16c`** — acesso pelo celular na mesma rede Wi-Fi: `launcher.py` liga o Uvicorn em `0.0.0.0` (porta fixa 8756) em vez de `127.0.0.1`, escreve `Acesse pelo celular.txt` do lado do `.exe` a cada abertura com o IP local atual. Usuário escolheu essa opção (grátis, rede local) em vez de hospedar na internet (pago, mudaria a proposta 100% local do projeto).
+- **`5655e3e`** — **bug sério no meu próprio processo, não no app**: toda atualização eu apagava a pasta inteira da cópia em uso (`Remove-Item -Recurse -Force`) e recopiava do zero, o que apagava `fincontrol.db` e `.env` junto com o programa. Criado `desktop/update-desktop-copy.ps1`: troca só `FinControl.exe` + `_internal`, nunca toca no banco/config, e ainda faz backup timestamped em `backups/` antes de qualquer coisa. **Usar sempre esse script a partir de agora, nunca mais copiar a pasta inteira por cima de uma cópia em uso.**
+
+**Nota:** o susto do "banco sumiu" foi falso alarme — o usuário tinha movido a pasta de `Desktop\FinControl` pra `Desktop\area_trabalho\FinControl` (prefere manter tudo junto), não foi apagado por antivírus nem nada. Mas o risco real (meu processo apagar dados numa atualização futura) era genuíno e ficou corrigido de qualquer forma.
 
 ---
 
