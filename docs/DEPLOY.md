@@ -13,16 +13,32 @@ serviço de terceiro). Eu preparei todo o código e configs pra esse passo a pas
 
 ---
 
-## 0. Subir o código pro GitHub (se ainda não tiver)
+## Status atual (atualizado 2026-08-09)
 
-Hoje o repositório não tem remoto configurado. Render e Vercel puxam o deploy direto do GitHub, então:
+- [x] Repositório GitHub criado: `https://github.com/matheusf8/FinControl.git`, remoto `origin`
+      já configurado localmente
+- [ ] **`git push -u origin main`** — bloqueado pro assistente (o ambiente do Claude Code recusa
+      `git push` mesmo com autorização do usuário — trava do lado da ferramenta, não é decisão
+      minha). **Precisa rodar esse comando você mesmo:**
+      ```bash
+      git push -u origin main
+      ```
+- [ ] Neon: projeto criado via `neonctl init`, mas o connection string do Postgres ainda não foi
+      pego — o que veio até agora foram credenciais de S3 storage e de AI Gateway (add-ons do
+      Neon que não usamos aqui, não confundir com `DATABASE_URL`). Falta rodar:
+      ```bash
+      npx neonctl@latest connection-string
+      ```
+      ou pegar em https://console.neon.tech → projeto → **Connection Details**.
+      ⚠️ As duas chaves já coladas no chat (S3 e AI Gateway) foram tratadas como expostas —
+      recomendado revogar/regenerar no console da Neon por precaução, mesmo não sendo usadas.
+- [ ] Render: serviço ainda não criado
+- [ ] Vercel: projeto ainda não criado
 
-1. Crie um repositório novo (pode ser **privado**) em https://github.com/new
-2. Na pasta do projeto:
-   ```powershell
-   git remote add origin https://github.com/SEU_USUARIO/sistema-financeiro.git
-   git push -u origin main
-   ```
+## 0. Subir o código pro GitHub
+
+Já feito: remoto `origin` aponta pra `https://github.com/matheusf8/FinControl.git`. Só falta você
+rodar o `git push -u origin main` (ver "Status atual" acima).
 
 ## 1. Banco de dados — Neon (Postgres gratuito)
 
@@ -46,7 +62,7 @@ própria, o comando é `python -c "import secrets; print(secrets.token_hex(32))"
 ## 3. Backend — Render
 
 1. Crie conta em https://render.com (dá pra entrar com GitHub)
-2. "New" → "Blueprint" → conecte o repositório `sistema-financeiro` — o Render já vai ler o
+2. "New" → "Blueprint" → conecte o repositório `FinControl` — o Render já vai ler o
    [`backend/render.yaml`](../backend/render.yaml) que preparei e sugerir o serviço `fincontrol-backend`
 3. Ele vai pedir pra preencher 3 env vars (ficaram como `sync: false` no blueprint de propósito,
    pra não pedir isso público no arquivo):
@@ -61,7 +77,7 @@ própria, o comando é `python -c "import secrets; print(secrets.token_hex(32))"
 ## 4. Frontend — Vercel
 
 1. Crie conta em https://vercel.com (dá pra entrar com GitHub)
-2. "Add New" → "Project" → importe o repositório `sistema-financeiro`
+2. "Add New" → "Project" → importe o repositório `FinControl`
 3. Em "Root Directory", selecione `frontend`
 4. Em "Environment Variables", adicione:
    - `VITE_API_URL` = a URL do backend do passo 3 (ex: `https://fincontrol-backend.onrender.com`,
