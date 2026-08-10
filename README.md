@@ -10,6 +10,14 @@ Sistema de controle financeiro pessoal — hospedado na internet, acessível de 
 >
 > 🎉 **Hospedado (pós-MVP):** saiu do `.exe` local pra rodar sempre no ar, com cadastro aberto por convite. Veja [docs/DEPLOY.md](./docs/DEPLOY.md) pros detalhes operacionais.
 
+## 📸 Demonstração
+
+![Login](docs/screenshots/login.jpg)
+
+> Cadastro exige código de convite, então o dashboard com dados reais não é público. Se quiser
+> exibir mais telas aqui, o ideal é logar com uma conta de demonstração (dados fictícios) e trocar
+> este print — assim não expõe dados financeiros reais.
+
 ## Funcionalidades
 
 - **Autenticação** — cadastro por código de convite, login, JWT com refresh automático, rate limiting contra força bruta
