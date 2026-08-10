@@ -13,16 +13,10 @@ serviço de terceiro). Eu preparei todo o código e configs pra esse passo a pas
 
 ---
 
-## Status atual (atualizado 2026-08-09)
+## Status atual (atualizado 2026-08-10)
 
-- [x] Repositório GitHub criado: `https://github.com/matheusf8/FinControl.git`, remoto `origin`
-      já configurado localmente
-- [ ] **`git push -u origin main`** — bloqueado pro assistente (o ambiente do Claude Code recusa
-      `git push` mesmo com autorização do usuário — trava do lado da ferramenta, não é decisão
-      minha). **Precisa rodar esse comando você mesmo:**
-      ```bash
-      git push -u origin main
-      ```
+- [x] Repositório GitHub criado e código enviado: `https://github.com/matheusf8/FinControl.git`,
+      branch `main` sincronizada
 - [ ] Neon: projeto criado via `neonctl init`, mas o connection string do Postgres ainda não foi
       pego — o que veio até agora foram credenciais de S3 storage e de AI Gateway (add-ons do
       Neon que não usamos aqui, não confundir com `DATABASE_URL`). Falta rodar:
@@ -37,8 +31,7 @@ serviço de terceiro). Eu preparei todo o código e configs pra esse passo a pas
 
 ## 0. Subir o código pro GitHub
 
-Já feito: remoto `origin` aponta pra `https://github.com/matheusf8/FinControl.git`. Só falta você
-rodar o `git push -u origin main` (ver "Status atual" acima).
+✅ Feito — código já está em `https://github.com/matheusf8/FinControl.git`, branch `main`.
 
 ## 1. Banco de dados — Neon (Postgres gratuito)
 
