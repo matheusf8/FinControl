@@ -7,6 +7,10 @@ services:
     buildCommand: "pip install -r requirements.txt && alembic upgrade head"
     startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
+      # Fixa a versão do Python — sem isso o Render usa a mais nova (3.14), que quebra o build
+      # de pacotes com extensão nativa (ex: pydantic-core) por falta de wheel pronta ainda.
+      - key: PYTHON_VERSION
+        value: 3.12.7
       # Cole aqui pelo dashboard do Render (não commitar valores reais):
       # - SECRET_KEY: chave gerada com `python -c "import secrets; print(secrets.token_hex(32))"`
       # - DATABASE_URL: connection string do Postgres (Neon) — algo como
