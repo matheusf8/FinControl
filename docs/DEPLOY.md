@@ -21,7 +21,8 @@ serviço de terceiro). Eu preparei todo o código e configs pra esse passo a pas
       conversa/no Render — não commitada em arquivo nenhum por segurança)
 - [x] Render: backend no ar em `https://fincontrol-backend-cebg.onrender.com`,
       `/api/health` respondendo `200 OK`
-- [ ] Vercel: projeto ainda não criado
+- [x] Vercel: frontend no ar em `https://fin-control-three.vercel.app`
+- [ ] Fechar CORS: falta trocar `CORS_ORIGINS` no Render pra essa URL do Vercel
 
 ## 0. Subir o código pro GitHub
 
