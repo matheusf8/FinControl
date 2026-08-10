@@ -2,15 +2,17 @@
 
 Sistema de controle financeiro pessoal — hospedado na internet, acessível de qualquer lugar.
 
+🌐 **No ar:** https://fin-control-three.vercel.app (cadastro requer código de convite)
+
 **Stack:** React (Vite) no [Vercel](https://vercel.com) + FastAPI no [Render](https://render.com) + Postgres no [Neon](https://neon.tech). Também existe um empacotamento local em `.exe` (PyInstaller + pywebview + SQLite) em `desktop/`, mantido no repositório mas não é mais o jeito recomendado de usar.
 
 > ✅ **MVP completo (Sprints 1–8):** autenticação, contas, categorias, transações, dashboard com gráficos, cartões com parcelamento, metas, modo escuro. Veja o [plano de execução](./PLANO_EXECUCAO.md) completo.
 >
-> 🌐 **Migração pra hospedado (pós-MVP):** saiu do `.exe` local pra rodar sempre no ar, com cadastro aberto. Veja [docs/DEPLOY.md](./docs/DEPLOY.md) pro passo a passo de deploy.
+> 🎉 **Hospedado (pós-MVP):** saiu do `.exe` local pra rodar sempre no ar, com cadastro aberto por convite. Veja [docs/DEPLOY.md](./docs/DEPLOY.md) pros detalhes operacionais.
 
 ## Funcionalidades
 
-- **Autenticação** — cadastro, login, JWT com refresh automático, rate limiting contra força bruta
+- **Autenticação** — cadastro por código de convite, login, JWT com refresh automático, rate limiting contra força bruta
 - **Contas** — corrente, poupança, carteira, investimento
 - **Categorias e transações** — receitas/despesas categorizadas, com filtros por conta/categoria/tipo/período
 - **Dashboard** — saldo total e por conta, gastos por categoria (pizza), evolução mensal (linha)
@@ -54,13 +56,13 @@ npm run dev
 
 ## Como rodar os testes
 
-Backend (64 testes):
+Backend (67 testes):
 ```bash
 cd backend
 .venv\Scripts\python.exe -m pytest
 ```
 
-Frontend (6 testes):
+Frontend (13 testes):
 ```bash
 cd frontend
 npm run test
