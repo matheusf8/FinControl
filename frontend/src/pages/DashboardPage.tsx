@@ -101,7 +101,18 @@ export function DashboardPage() {
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={90} label>
+                <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                outerRadius={90}
+                label
+                // A animação de entrada (crescer do 0°) trava numa fatia
+                // minúscula em alguns navegadores/ambientes — recharts nunca
+                // termina o tween e a pizza fica "achatada". Sem impacto
+                // visual perceptível desligar, e evita esse travamento.
+                isAnimationActive={false}
+              >
                   {pieData.map((entry, index) => (
                     <Cell
                       key={entry.name}
