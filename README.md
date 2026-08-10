@@ -12,11 +12,16 @@ Sistema de controle financeiro pessoal — hospedado na internet, acessível de 
 
 ## 📸 Demonstração
 
-![Login](docs/screenshots/login.jpg)
+| Login | Dashboard |
+|---|---|
+| ![Login](docs/screenshots/login.jpg) | ![Dashboard](docs/screenshots/dashboard.jpg) |
 
-> Cadastro exige código de convite, então o dashboard com dados reais não é público. Se quiser
-> exibir mais telas aqui, o ideal é logar com uma conta de demonstração (dados fictícios) e trocar
-> este print — assim não expõe dados financeiros reais.
+| Cartões (compras parceladas) | Transações |
+|---|---|
+| ![Cartões](docs/screenshots/cartoes.jpg) | ![Transações](docs/screenshots/transacoes.jpg) |
+
+> Telas de uma conta de demonstração (dados fictícios) — cadastro exige código de convite, então o
+> dashboard com dados reais não é público.
 
 ## Funcionalidades
 
