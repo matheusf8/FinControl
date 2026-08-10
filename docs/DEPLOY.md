@@ -19,7 +19,8 @@ serviço de terceiro). Eu preparei todo o código e configs pra esse passo a pas
       branch `main` sincronizada
 - [x] Neon: projeto `FinControl` criado, connection string do Postgres obtida (guardada só na
       conversa/no Render — não commitada em arquivo nenhum por segurança)
-- [ ] Render: serviço ainda não criado
+- [x] Render: backend no ar em `https://fincontrol-backend-cebg.onrender.com`,
+      `/api/health` respondendo `200 OK`
 - [ ] Vercel: projeto ainda não criado
 
 ## 0. Subir o código pro GitHub
