@@ -14,7 +14,3 @@ python-dotenv==1.0.1
 pytest==8.3.4
 httpx==0.28.1
 pytest-asyncio==0.25.0
-
-# Empacotamento (Sprint 8)
-pywebview==5.4
-pyinstaller==6.11.1

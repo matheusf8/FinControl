@@ -1,0 +1,5 @@
+# Dependências extras só pra gerar o .exe local (legado, ver README "Como gerar o .exe").
+# Não usadas no backend hospedado (Render) — ficam fora de requirements.txt de propósito,
+# porque pyinstaller não suporta versões novas de Python e não tem nada a ver com servir a API.
+pywebview==5.4
+pyinstaller==6.11.1

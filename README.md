@@ -77,7 +77,11 @@ npm run build
 Remove-Item -Recurse -Force ..\backend\app\static\* -ErrorAction SilentlyContinue
 Copy-Item -Recurse dist\* ..\backend\app\static\
 
-# 3. Gera o executável (pasta portátil desktop/dist/FinControl/)
+# 3. Instala as dependências extras de empacotamento (fora do requirements.txt do servidor)
+cd ..\backend
+.venv\Scripts\pip.exe install -r requirements-desktop.txt
+
+# 4. Gera o executável (pasta portátil desktop/dist/FinControl/)
 cd ..\desktop
 ..\backend\.venv\Scripts\pyinstaller.exe build.spec --noconfirm
 ```
