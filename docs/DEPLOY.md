@@ -17,15 +17,8 @@ serviço de terceiro). Eu preparei todo o código e configs pra esse passo a pas
 
 - [x] Repositório GitHub criado e código enviado: `https://github.com/matheusf8/FinControl.git`,
       branch `main` sincronizada
-- [ ] Neon: projeto criado via `neonctl init`, mas o connection string do Postgres ainda não foi
-      pego — o que veio até agora foram credenciais de S3 storage e de AI Gateway (add-ons do
-      Neon que não usamos aqui, não confundir com `DATABASE_URL`). Falta rodar:
-      ```bash
-      npx neonctl@latest connection-string
-      ```
-      ou pegar em https://console.neon.tech → projeto → **Connection Details**.
-      ⚠️ As duas chaves já coladas no chat (S3 e AI Gateway) foram tratadas como expostas —
-      recomendado revogar/regenerar no console da Neon por precaução, mesmo não sendo usadas.
+- [x] Neon: projeto `FinControl` criado, connection string do Postgres obtida (guardada só na
+      conversa/no Render — não commitada em arquivo nenhum por segurança)
 - [ ] Render: serviço ainda não criado
 - [ ] Vercel: projeto ainda não criado
 
