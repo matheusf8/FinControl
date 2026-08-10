@@ -1,5 +1,5 @@
 """Acesso ao banco pras parcelas de cartão (Transaction com card_id preenchido)."""
-from sqlalchemy import func
+from sqlalchemy import extract
 from sqlalchemy.orm import Session
 
 from app.models.transaction import Transaction
@@ -19,13 +19,15 @@ class InstallmentRepository:
     def list_by_card_and_month(
         self, card_id: str, user_id: str, year: int, month: int
     ) -> list[Transaction]:
-        month_key = f"{year:04d}-{month:02d}"
+        # extract() em vez de strftime: strftime só existe no SQLite e quebra
+        # (função inexistente) no Postgres usado em produção.
         return (
             self.db.query(Transaction)
             .filter(
                 Transaction.card_id == card_id,
                 Transaction.user_id == user_id,
-                func.strftime("%Y-%m", Transaction.date) == month_key,
+                extract("year", Transaction.date) == year,
+                extract("month", Transaction.date) == month,
             )
             .order_by(Transaction.date)
             .all()

@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import func
+from sqlalchemy import extract, func
 from sqlalchemy.orm import Session
 
 from app.models.account import Account
@@ -96,16 +96,22 @@ class DashboardRepository:
         return result
 
     def monthly_evolution(self, user_id: str, months: int) -> list[tuple[str, Decimal, Decimal]]:
-        month_expr = func.strftime("%Y-%m", Transaction.date)
+        # extract() em vez de strftime: strftime só existe no SQLite e quebra
+        # (função inexistente) no Postgres usado em produção.
+        year_expr = extract("year", Transaction.date)
+        month_expr = extract("month", Transaction.date)
         rows = (
-            self.db.query(month_expr, Transaction.type, func.coalesce(func.sum(Transaction.amount), 0))
+            self.db.query(
+                year_expr, month_expr, Transaction.type, func.coalesce(func.sum(Transaction.amount), 0)
+            )
             .filter(Transaction.user_id == user_id)
-            .group_by(month_expr, Transaction.type)
+            .group_by(year_expr, month_expr, Transaction.type)
             .all()
         )
         totals: dict[str, dict[str, Decimal]] = {}
-        for month, type_, total in rows:
-            totals.setdefault(month, {})[FlowType(type_).value] = _to_decimal(total)
+        for year_val, month_val, type_, total in rows:
+            key = f"{int(year_val):04d}-{int(month_val):02d}"
+            totals.setdefault(key, {})[FlowType(type_).value] = _to_decimal(total)
 
         today = datetime.now(timezone.utc)
         result = []
