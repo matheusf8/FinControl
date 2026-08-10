@@ -29,6 +29,9 @@ desktop/dist/
 
 *.log
 
+# Prints trocados na conversa com o assistente (podem ter credenciais na tela)
+prints/
+
 # Editor / SO
 .vscode/
 .DS_Store
