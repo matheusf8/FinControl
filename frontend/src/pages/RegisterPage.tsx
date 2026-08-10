@@ -14,6 +14,9 @@ const registerSchema = z
     // Limites espelham backend/app/schemas/auth.py (bcrypt trunca em 72 bytes)
     password: z.string().min(8, 'Mínimo de 8 caracteres').max(72, 'Máximo de 72 caracteres'),
     confirmPassword: z.string(),
+    // Validado de verdade só no backend (settings.invite_code) — aqui é só
+    // obrigatório não ficar em branco quando preenchido pelo usuário.
+    inviteCode: z.string().min(1, 'Código de convite obrigatório'),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'As senhas não coincidem',
@@ -39,11 +42,14 @@ export function RegisterPage() {
         email: data.email,
         password: data.password,
         full_name: data.fullName || undefined,
+        invite_code: data.inviteCode,
       })
       navigate('/login', { replace: true })
     } catch (err) {
       if (isAxiosError(err) && err.response?.status === 409) {
         setServerError('Já existe uma conta com esse e-mail')
+      } else if (isAxiosError(err) && err.response?.status === 403) {
+        setServerError('Código de convite inválido')
       } else {
         setServerError('Não foi possível criar a conta, tente novamente')
       }
@@ -126,6 +132,24 @@ export function RegisterPage() {
           />
           {errors.confirmPassword && (
             <p className="text-sm text-red-600 mt-1">{errors.confirmPassword.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="inviteCode"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Código de convite
+          </label>
+          <input
+            id="inviteCode"
+            type="text"
+            className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
+            {...register('inviteCode')}
+          />
+          {errors.inviteCode && (
+            <p className="text-sm text-red-600 mt-1">{errors.inviteCode.message}</p>
           )}
         </div>
 

@@ -67,6 +67,12 @@ class Settings(BaseSettings):
     # var pra incluir o domínio do frontend (ex: https://fincontrol.vercel.app).
     cors_origins: str = "http://localhost:5173"
 
+    # Código de convite pro cadastro: se setado (via env var no Render), o
+    # /register passa a exigir esse código, pra cadastro aberto pra internet
+    # não virar público de fato — só quem recebeu o código consegue criar
+    # conta. Se ficar vazio (default local/dev/testes), cadastro fica livre.
+    invite_code: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"), env_file_encoding="utf-8", extra="ignore"
     )

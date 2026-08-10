@@ -10,6 +10,9 @@ class UserCreate(BaseModel):
     # pra dar um erro 422 claro em vez de truncar a senha silenciosamente.
     password: str = Field(min_length=8, max_length=72)
     full_name: str | None = Field(default=None, max_length=255)
+    # Só exigido de verdade se settings.invite_code estiver setado (ver
+    # AuthService.register). Opcional aqui pra não quebrar dev/testes locais.
+    invite_code: str | None = None
 
 
 class UserLogin(BaseModel):

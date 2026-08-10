@@ -1,6 +1,7 @@
 """Regras de negócio de autenticação: registro, login e refresh de token."""
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.security import (
     InvalidTokenError,
     TokenType,
@@ -27,12 +28,19 @@ class UserNotFoundError(Exception):
     """Token válido, mas o usuário não existe mais (ex: foi deletado)."""
 
 
+class InvalidInviteCodeError(Exception):
+    """Código de convite ausente ou incorreto (só levantado quando
+    settings.invite_code está configurado)."""
+
+
 class AuthService:
     def __init__(self, db: Session):
         self.db = db
         self.users = UserRepository(db)
 
     def register(self, data: UserCreate) -> User:
+        if settings.invite_code and data.invite_code != settings.invite_code:
+            raise InvalidInviteCodeError()
         if self.users.get_by_email(data.email):
             raise EmailAlreadyRegisteredError(data.email)
         return self.users.create(

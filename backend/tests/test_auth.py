@@ -1,5 +1,6 @@
 """Testes de autenticação: registro, login, refresh, rota protegida."""
 from app.core import rate_limit
+from app.core.config import settings
 
 
 def test_register_creates_user(client):
@@ -140,3 +141,38 @@ def test_login_rate_limit_is_per_email(client):
     assert resp.status_code == 200
 
     rate_limit.register_success(email_a)
+
+
+def test_register_requires_invite_code_when_configured(client, monkeypatch):
+    monkeypatch.setattr(settings, "invite_code", "convite123")
+    resp = client.post(
+        "/api/auth/register",
+        json={"email": "semcodigo@example.com", "password": "senha1234"},
+    )
+    assert resp.status_code == 403
+
+
+def test_register_with_wrong_invite_code_fails(client, monkeypatch):
+    monkeypatch.setattr(settings, "invite_code", "convite123")
+    resp = client.post(
+        "/api/auth/register",
+        json={
+            "email": "codigoerrado@example.com",
+            "password": "senha1234",
+            "invite_code": "chuta123",
+        },
+    )
+    assert resp.status_code == 403
+
+
+def test_register_with_correct_invite_code_succeeds(client, monkeypatch):
+    monkeypatch.setattr(settings, "invite_code", "convite123")
+    resp = client.post(
+        "/api/auth/register",
+        json={
+            "email": "comcodigo@example.com",
+            "password": "senha1234",
+            "invite_code": "convite123",
+        },
+    )
+    assert resp.status_code == 201

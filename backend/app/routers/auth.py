@@ -11,6 +11,7 @@ from app.services.auth_service import (
     AuthService,
     EmailAlreadyRegisteredError,
     InvalidCredentialsError,
+    InvalidInviteCodeError,
     UserNotFoundError,
 )
 
@@ -35,6 +36,10 @@ def register(data: UserCreate, request: Request, db: Session = Depends(get_db)) 
     register_attempt(rate_limit_key)
     try:
         return AuthService(db).register(data)
+    except InvalidInviteCodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Código de convite inválido"
+        ) from exc
     except EmailAlreadyRegisteredError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="E-mail já cadastrado"
