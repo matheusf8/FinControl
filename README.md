@@ -118,3 +118,7 @@ Se algo der errado ao abrir o `.exe` (não deveria, mas caso aconteça), o diagn
 - `frontend/` — interface em React
 - `desktop/` — empacotamento local em `.exe` (legado: `launcher.py`, `build.spec`, `icon.ico`)
 - `docs/` — documentação do projeto, incluindo [DEPLOY.md](./docs/DEPLOY.md)
+
+## Licença
+
+MIT — veja [LICENSE](./LICENSE).
