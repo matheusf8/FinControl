@@ -6,14 +6,16 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { categoryService } from '../services/financeService'
 
+// Cores prontas pra escolher com um clique, sem digitar código — as mesmas
+// usadas como fallback nos gráficos do dashboard (frontend/src/pages/DashboardPage.tsx).
+const COLOR_PRESETS = ['#6366f1', '#22c55e', '#f97316', '#ef4444', '#0ea5e9', '#a855f7', '#eab308', '#64748b']
+
 const categorySchema = z.object({
   name: z.string().min(1, 'Informe um nome').max(120),
   type: z.enum(['income', 'expense']),
-  color: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida (ex: #22c55e)')
-    .optional()
-    .or(z.literal('')),
+  // Sempre vem de um <input type="color"> ou de um preset, nunca digitado —
+  // por isso sempre tem um valor válido (o regex é só uma trava de segurança).
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida'),
 })
 
 type CategoryForm = z.infer<typeof categorySchema>
@@ -31,17 +33,21 @@ export function CategoriesPage() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CategoryForm>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { type: 'expense', name: '', color: '' },
+    defaultValues: { type: 'expense', name: '', color: COLOR_PRESETS[0] },
   })
+
+  const selectedColor = watch('color')
 
   const createMutation = useMutation({
     mutationFn: categoryService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      reset({ name: '', type: 'expense', color: '' })
+      reset({ name: '', type: 'expense', color: COLOR_PRESETS[0] })
     },
     onError: () => setError('Não foi possível criar a categoria'),
   })
@@ -63,7 +69,7 @@ export function CategoriesPage() {
     createMutation.mutate({
       name: data.name,
       type: data.type,
-      color: data.color || undefined,
+      color: data.color,
     })
   }
 
@@ -103,15 +109,34 @@ export function CategoriesPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="color">
-            Cor (opcional)
-          </label>
-          <input
-            id="color"
-            placeholder="#22c55e"
-            className="mt-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
-            {...register('color')}
-          />
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cor</label>
+          <div className="mt-1 flex items-center gap-2">
+            {/* input nativo type="color": abre o seletor do sistema/navegador,
+                ninguém precisa saber ou digitar o código hexadecimal */}
+            <input
+              type="color"
+              aria-label="Escolher cor da categoria"
+              className="h-10 w-12 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-1 cursor-pointer"
+              {...register('color')}
+            />
+            <div className="flex flex-wrap gap-1.5">
+              {COLOR_PRESETS.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  title={preset}
+                  aria-label={`Usar cor ${preset}`}
+                  onClick={() => setValue('color', preset, { shouldValidate: true })}
+                  className={`h-6 w-6 rounded-full ${
+                    selectedColor === preset
+                      ? 'ring-2 ring-offset-1 ring-indigo-600 dark:ring-offset-gray-800'
+                      : ''
+                  }`}
+                  style={{ backgroundColor: preset }}
+                />
+              ))}
+            </div>
+          </div>
           {errors.color && <p className="text-sm text-red-600 mt-1">{errors.color.message}</p>}
         </div>
 

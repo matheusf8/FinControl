@@ -1,5 +1,5 @@
 """Regras de negócio das agregações do dashboard (período padrão, ordenação, etc.)."""
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -10,8 +10,10 @@ from app.schemas.dashboard import (
     AccountBalance,
     BalancesResponse,
     CategoryBreakdownItem,
+    DayTotal,
     MonthlyEvolutionItem,
     SummaryResponse,
+    WeeklySummaryResponse,
 )
 
 
@@ -99,3 +101,43 @@ class DashboardService:
             MonthlyEvolutionItem(month=month, income=income, expense=expense)
             for month, income, expense in rows
         ]
+
+    def weekly_summary(self, user_id: str, week_start: date | None) -> WeeklySummaryResponse:
+        # Segunda-feira da semana pedida (ou da semana atual se nada vier) —
+        # date.weekday() já é 0=segunda...6=domingo, então basta voltar esses
+        # dias pra achar a segunda. Isso também "normaliza" qualquer data no
+        # meio da semana que o front mande pra a segunda daquela semana.
+        anchor = week_start or datetime.now(timezone.utc).date()
+        monday = anchor - timedelta(days=anchor.weekday())
+        sunday = monday + timedelta(days=6)
+
+        range_start = datetime.combine(monday, datetime.min.time(), tzinfo=timezone.utc)
+        range_end = datetime.combine(sunday, datetime.max.time(), tzinfo=timezone.utc)
+
+        totals = self.repo.totals_by_type(user_id, range_start, range_end)
+        daily = self.repo.daily_totals(user_id, range_start, range_end)
+
+        days = []
+        for i in range(7):
+            day = monday + timedelta(days=i)
+            key = day.isoformat()
+            day_totals = daily.get(key, {})
+            days.append(
+                DayTotal(
+                    date=key,
+                    income=day_totals.get("income", Decimal("0")),
+                    expense=day_totals.get("expense", Decimal("0")),
+                )
+            )
+
+        income = totals[FlowType.INCOME]
+        expense = totals[FlowType.EXPENSE]
+        return WeeklySummaryResponse(
+            week_start=monday.isoformat(),
+            week_end=sunday.isoformat(),
+            total_balance=self.balances(user_id).total_balance,
+            total_income=income,
+            total_expense=expense,
+            net=income - expense,
+            days=days,
+        )

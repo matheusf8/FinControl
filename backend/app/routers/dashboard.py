@@ -1,5 +1,5 @@
 """Endpoints de agregação pro dashboard: saldos, resumo, gastos por categoria, evolução mensal."""
-from datetime import datetime
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from app.schemas.dashboard import (
     CategoryBreakdownItem,
     MonthlyEvolutionItem,
     SummaryResponse,
+    WeeklySummaryResponse,
 )
 from app.services.dashboard_service import DashboardService
 
@@ -55,3 +56,16 @@ def get_monthly_evolution(
     db: Session = Depends(get_db),
 ) -> list[MonthlyEvolutionItem]:
     return DashboardService(db).monthly_evolution(current_user.id, months)
+
+
+@router.get("/weekly", response_model=WeeklySummaryResponse)
+def get_weekly_summary(
+    week_start: date | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WeeklySummaryResponse:
+    """Resumo da semana (segunda a domingo) que contém `week_start` — sem
+    esse parâmetro, usa a semana atual. Qualquer dia da semana serve como
+    âncora (o service normaliza pra segunda-feira), o que facilita navegar
+    "semana anterior/próxima" no front só somando/subtraindo 7 dias."""
+    return DashboardService(db).weekly_summary(current_user.id, week_start)

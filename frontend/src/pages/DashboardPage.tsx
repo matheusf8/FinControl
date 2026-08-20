@@ -17,6 +17,53 @@ import { useAuthStore } from '../store/authStore'
 
 const FALLBACK_COLORS = ['#6366f1', '#22c55e', '#f97316', '#ef4444', '#0ea5e9', '#a855f7', '#eab308']
 
+const RADIAN = Math.PI / 180
+
+// Rótulo dentro da fatia (porcentagem), em vez do padrão do recharts que
+// escreve nome+valor fora da pizza com uma linha guia: em fatias vizinhas
+// pequenas essas linhas/textos se atropelam e, na fatia que cai perto do
+// topo, o texto é cortado pela borda do card (era o caso do "Fatura" roxo).
+// Fatias muito finas (<6%) não recebem rótulo — não cabe texto legível ali,
+// e a legenda + tooltip já mostram nome e valor exato ao passar o mouse.
+type PieLabelProps = {
+  cx?: number
+  cy?: number
+  midAngle?: number
+  innerRadius?: number
+  outerRadius?: number
+  percent?: number
+}
+
+function renderPercentLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: PieLabelProps) {
+  if (
+    cx === undefined ||
+    cy === undefined ||
+    midAngle === undefined ||
+    innerRadius === undefined ||
+    outerRadius === undefined ||
+    percent === undefined ||
+    percent < 0.06
+  ) {
+    return null
+  }
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.6
+  const x = cx + radius * Math.cos(-midAngle * RADIAN)
+  const y = cy + radius * Math.sin(-midAngle * RADIAN)
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="#fff"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight={600}
+    >
+      {`${Math.round(percent * 100)}%`}
+    </text>
+  )
+}
+
 function formatCurrency(value: string): string {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
@@ -106,7 +153,8 @@ export function DashboardPage() {
                 dataKey="value"
                 nameKey="name"
                 outerRadius={90}
-                label
+                label={renderPercentLabel}
+                labelLine={false}
                 // A animação de entrada (crescer do 0°) trava numa fatia
                 // minúscula em alguns navegadores/ambientes — recharts nunca
                 // termina o tween e a pizza fica "achatada". Sem impacto
@@ -125,7 +173,17 @@ export function DashboardPage() {
                     Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
                   }
                 />
-                <Legend />
+                <Legend
+                  formatter={(value, entry) => {
+                    const item = (entry as { payload?: { value: number } }).payload
+                    return (
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {value}
+                        {item ? ` — ${formatCurrency(String(item.value))}` : ''}
+                      </span>
+                    )
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           )}

@@ -1,6 +1,6 @@
 """Testes do dashboard: saldos, resumo, breakdown por categoria e evolução mensal."""
 import calendar
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 
 def _create_account(client, headers, name="Conta", initial_balance="0"):
@@ -124,3 +124,69 @@ def test_monthly_evolution_returns_fixed_window(client, auth_headers):
     assert body[-1]["expense"] == "0"
     # meses sem transação vêm zerados, não somem da lista
     assert body[0]["income"] == "0"
+
+
+def test_weekly_summary_defaults_to_current_week(client, auth_headers):
+    account = _create_account(client, auth_headers, initial_balance="100.00")
+    _create_transaction(client, auth_headers, account["id"], "200.00", "income", _now_iso())
+    _create_transaction(client, auth_headers, account["id"], "80.00", "expense", _now_iso())
+
+    resp = client.get("/api/dashboard/weekly", headers=auth_headers)
+    assert resp.status_code == 200
+    body = resp.json()
+
+    today = datetime.now(timezone.utc).date()
+    monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6)
+    assert body["week_start"] == monday.isoformat()
+    assert body["week_end"] == sunday.isoformat()
+    assert body["total_income"] == "200.00"
+    assert body["total_expense"] == "80.00"
+    assert body["net"] == "120.00"
+    # saldo total é o saldo geral das contas (100 inicial + 200 - 80), não só da semana
+    assert body["total_balance"] == "220.00"
+    assert len(body["days"]) == 7
+
+
+def test_weekly_summary_groups_by_day_of_week(client, auth_headers):
+    account = _create_account(client, auth_headers)
+    today = datetime.now(timezone.utc)
+    monday = today - timedelta(days=today.weekday())
+    wednesday = monday + timedelta(days=2)
+
+    _create_transaction(
+        client, auth_headers, account["id"], "60.00", "expense", wednesday.isoformat()
+    )
+
+    resp = client.get("/api/dashboard/weekly", headers=auth_headers)
+    body = resp.json()
+
+    wednesday_entry = next(d for d in body["days"] if d["date"] == wednesday.date().isoformat())
+    assert wednesday_entry["expense"] == "60.00"
+    # dias sem lançamento vêm zerados, não somem da lista de 7 dias
+    other_days = [d for d in body["days"] if d["date"] != wednesday.date().isoformat()]
+    assert all(d["expense"] == "0" and d["income"] == "0" for d in other_days)
+
+
+def test_weekly_summary_accepts_week_start_for_navigation(client, auth_headers):
+    account = _create_account(client, auth_headers)
+    today = datetime.now(timezone.utc)
+    this_monday = today - timedelta(days=today.weekday())
+    last_monday = this_monday - timedelta(days=7)
+
+    _create_transaction(
+        client, auth_headers, account["id"], "40.00", "income", last_monday.isoformat()
+    )
+
+    resp = client.get(
+        "/api/dashboard/weekly",
+        params={"week_start": last_monday.date().isoformat()},
+        headers=auth_headers,
+    )
+    body = resp.json()
+    assert body["week_start"] == last_monday.date().isoformat()
+    assert body["total_income"] == "40.00"
+
+    # semana atual não deve enxergar o lançamento da semana passada
+    resp_current = client.get("/api/dashboard/weekly", headers=auth_headers)
+    assert resp_current.json()["total_income"] == "0"

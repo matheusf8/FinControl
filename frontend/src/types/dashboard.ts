@@ -32,3 +32,19 @@ export type MonthlyEvolutionItem = {
   income: string
   expense: string
 }
+
+export type DayTotal = {
+  date: string // "2026-08-17"
+  income: string
+  expense: string
+}
+
+export type WeeklySummaryResponse = {
+  week_start: string // segunda-feira, "2026-08-17"
+  week_end: string // domingo, "2026-08-23"
+  total_balance: string
+  total_income: string
+  total_expense: string
+  net: string
+  days: DayTotal[] // sempre 7 itens, segunda a domingo
+}

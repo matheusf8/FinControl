@@ -4,6 +4,7 @@ import type {
   CategoryBreakdownItem,
   MonthlyEvolutionItem,
   SummaryResponse,
+  WeeklySummaryResponse,
 } from '../types/dashboard'
 import type { FlowType } from '../types/finance'
 
@@ -17,5 +18,13 @@ export const dashboardService = {
   monthlyEvolution: (months = 6) =>
     api
       .get<MonthlyEvolutionItem[]>('/dashboard/monthly-evolution', { params: { months } })
+      .then((r) => r.data),
+  // weekStart: qualquer data "AAAA-MM-DD" dentro da semana desejada (o
+  // backend normaliza pra segunda-feira). Sem isso, usa a semana atual.
+  weeklySummary: (weekStart?: string) =>
+    api
+      .get<WeeklySummaryResponse>('/dashboard/weekly', {
+        params: weekStart ? { week_start: weekStart } : undefined,
+      })
       .then((r) => r.data),
 }

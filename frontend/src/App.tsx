@@ -9,6 +9,7 @@ import { GoalsPage } from './pages/GoalsPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { TransactionsPage } from './pages/TransactionsPage'
+import { WeeklyPage } from './pages/WeeklyPage'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/weekly" element={<WeeklyPage />} />
         <Route path="/accounts" element={<AccountsPage />} />
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/transactions" element={<TransactionsPage />} />

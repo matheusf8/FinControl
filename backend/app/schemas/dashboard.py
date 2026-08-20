@@ -35,3 +35,19 @@ class MonthlyEvolutionItem(BaseModel):
     month: str  # "2026-08"
     income: Decimal
     expense: Decimal
+
+
+class DayTotal(BaseModel):
+    date: str  # "2026-08-17"
+    income: Decimal
+    expense: Decimal
+
+
+class WeeklySummaryResponse(BaseModel):
+    week_start: str  # segunda-feira, "2026-08-17"
+    week_end: str  # domingo, "2026-08-23"
+    total_balance: Decimal  # saldo atual (todas as contas, não só da semana)
+    total_income: Decimal
+    total_expense: Decimal
+    net: Decimal
+    days: list[DayTotal]  # sempre 7 itens, segunda a domingo, dias sem lançamento vêm zerados

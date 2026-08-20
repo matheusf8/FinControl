@@ -95,6 +95,37 @@ class DashboardRepository:
             result.append((None, uncategorized_total))
         return result
 
+    def daily_totals(
+        self, user_id: str, date_from: datetime, date_to: datetime
+    ) -> dict[str, dict[str, Decimal]]:
+        """Totais de income/expense por dia (chave "AAAA-MM-DD"), só pros dias
+        que tiverem lançamento — dias sem nada não aparecem aqui (quem chama
+        preenche os buracos, ex: semana inteira mesmo com dias zerados)."""
+        year_expr = extract("year", Transaction.date)
+        month_expr = extract("month", Transaction.date)
+        day_expr = extract("day", Transaction.date)
+        rows = (
+            self.db.query(
+                year_expr,
+                month_expr,
+                day_expr,
+                Transaction.type,
+                func.coalesce(func.sum(Transaction.amount), 0),
+            )
+            .filter(
+                Transaction.user_id == user_id,
+                Transaction.date >= date_from,
+                Transaction.date <= date_to,
+            )
+            .group_by(year_expr, month_expr, day_expr, Transaction.type)
+            .all()
+        )
+        totals: dict[str, dict[str, Decimal]] = {}
+        for year_val, month_val, day_val, type_, total in rows:
+            key = f"{int(year_val):04d}-{int(month_val):02d}-{int(day_val):02d}"
+            totals.setdefault(key, {})[FlowType(type_).value] = _to_decimal(total)
+        return totals
+
     def monthly_evolution(self, user_id: str, months: int) -> list[tuple[str, Decimal, Decimal]]:
         # extract() em vez de strftime: strftime só existe no SQLite e quebra
         # (função inexistente) no Postgres usado em produção.

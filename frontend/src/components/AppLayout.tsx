@@ -22,6 +22,9 @@ export function AppLayout() {
           <NavLink to="/dashboard" className={navLinkClass}>
             Dashboard
           </NavLink>
+          <NavLink to="/weekly" className={navLinkClass}>
+            Semana
+          </NavLink>
           <NavLink to="/accounts" className={navLinkClass}>
             Contas
           </NavLink>
