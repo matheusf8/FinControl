@@ -82,6 +82,51 @@ def test_me_with_garbage_token_fails(client):
     assert resp.status_code == 401
 
 
+def test_me_defaults_cycle_closing_day_to_24(client):
+    client.post("/api/auth/register", json={"email": "ciclo@example.com", "password": "senha1234"})
+    login_resp = client.post(
+        "/api/auth/login", json={"email": "ciclo@example.com", "password": "senha1234"}
+    )
+    token = login_resp.json()["access_token"]
+
+    resp = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert resp.json()["cycle_closing_day"] == 24
+
+
+def test_update_cycle_closing_day(client):
+    client.post("/api/auth/register", json={"email": "ciclo2@example.com", "password": "senha1234"})
+    login_resp = client.post(
+        "/api/auth/login", json={"email": "ciclo2@example.com", "password": "senha1234"}
+    )
+    headers = {"Authorization": f"Bearer {login_resp.json()['access_token']}"}
+
+    resp = client.patch("/api/auth/me", json={"cycle_closing_day": 15}, headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["cycle_closing_day"] == 15
+
+    # persiste — uma consulta separada em /me reflete o valor salvo
+    resp = client.get("/api/auth/me", headers=headers)
+    assert resp.json()["cycle_closing_day"] == 15
+
+
+def test_update_cycle_closing_day_rejects_out_of_range(client):
+    client.post("/api/auth/register", json={"email": "ciclo3@example.com", "password": "senha1234"})
+    login_resp = client.post(
+        "/api/auth/login", json={"email": "ciclo3@example.com", "password": "senha1234"}
+    )
+    headers = {"Authorization": f"Bearer {login_resp.json()['access_token']}"}
+
+    resp = client.patch("/api/auth/me", json={"cycle_closing_day": 0}, headers=headers)
+    assert resp.status_code == 422
+    resp = client.patch("/api/auth/me", json={"cycle_closing_day": 32}, headers=headers)
+    assert resp.status_code == 422
+
+
+def test_update_cycle_closing_day_requires_authentication(client):
+    resp = client.patch("/api/auth/me", json={"cycle_closing_day": 15})
+    assert resp.status_code == 401
+
+
 def test_refresh_token_issues_new_access_token(client):
     client.post("/api/auth/register", json={"email": "refresh@example.com", "password": "senha1234"})
     login_resp = client.post(

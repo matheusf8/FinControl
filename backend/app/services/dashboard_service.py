@@ -10,6 +10,8 @@ from app.schemas.dashboard import (
     AccountBalance,
     BalancesResponse,
     CategoryBreakdownItem,
+    CyclePeriod,
+    CycleViewResponse,
     DayTotal,
     MonthlyEvolutionItem,
     SummaryResponse,
@@ -30,6 +32,45 @@ def _month_end(month_start: datetime) -> datetime:
     return next_month - timedelta(microseconds=1)
 
 
+def _last_day_of_month(year: int, month: int) -> int:
+    if month == 12:
+        next_year, next_month = year + 1, 1
+    else:
+        next_year, next_month = year, month + 1
+    return (date(next_year, next_month, 1) - date(year, month, 1)).days
+
+
+def _add_months(year: int, month: int, n: int) -> tuple[int, int]:
+    total = year * 12 + (month - 1) + n
+    return total // 12, total % 12 + 1
+
+
+def _closing_instant(closing_day: int, year: int, month: int) -> datetime:
+    """Último instante do dia de fechamento nesse mês (clampado pro último
+    dia do mês, igual due_day de cartão — ex: fechamento configurado como 31
+    "fecha" no dia 28/29 em fevereiro)."""
+    day = min(closing_day, _last_day_of_month(year, month))
+    return datetime(year, month, day, 23, 59, 59, 999999, tzinfo=timezone.utc)
+
+
+def _cycle_period(closing_day: int, now: datetime) -> tuple[datetime, datetime]:
+    """Ciclo financeiro do usuário — igual fechamento de fatura de cartão
+    (ver installment_service._first_invoice_month): o ciclo fecha no dia
+    `closing_day` de cada mês, e a partir do dia seguinte já conta pro
+    próximo ciclo. Retorna (início, fim) do ciclo que contém `now`."""
+    this_month_close = _closing_instant(closing_day, now.year, now.month)
+    if now > this_month_close:
+        end_year, end_month = _add_months(now.year, now.month, 1)
+    else:
+        end_year, end_month = now.year, now.month
+    end = _closing_instant(closing_day, end_year, end_month)
+
+    prev_year, prev_month = _add_months(end_year, end_month, -1)
+    prev_end = _closing_instant(closing_day, prev_year, prev_month)
+    start = prev_end + timedelta(microseconds=1)
+    return start, end
+
+
 class DashboardService:
     def __init__(self, db: Session):
         self.repo = DashboardRepository(db)
@@ -44,15 +85,14 @@ class DashboardService:
         return BalancesResponse(total_balance=total, accounts=accounts)
 
     def _default_period(
-        self, date_from: datetime | None, date_to: datetime | None
+        self, closing_day: int, date_from: datetime | None, date_to: datetime | None
     ) -> tuple[datetime, datetime]:
         if date_from is None and date_to is None:
-            # Nenhum período informado: mês corrente INTEIRO (dia 1 até o
-            # último instante do mês) — não limitar em "agora", senão um
-            # lançamento datado mais tarde no mês (ex: uma conta que já foi
-            # lançada mas vence depois) some do resumo.
-            month_start = _month_start(datetime.now(timezone.utc))
-            return month_start, _month_end(month_start)
+            # Nenhum período informado: usa o ciclo financeiro do usuário
+            # (fecha no dia `closing_day`, igual fatura de cartão), não o mês
+            # calendário — reflete melhor "quanto gastei desde que paguei as
+            # contas" do que dia 1 a dia 1.
+            return _cycle_period(closing_day, datetime.now(timezone.utc))
         if date_to is None:
             date_to = datetime.now(timezone.utc)
         if date_from is None:
@@ -60,9 +100,13 @@ class DashboardService:
         return date_from, date_to
 
     def summary(
-        self, user_id: str, date_from: datetime | None, date_to: datetime | None
+        self,
+        user_id: str,
+        closing_day: int,
+        date_from: datetime | None,
+        date_to: datetime | None,
     ) -> SummaryResponse:
-        date_from, date_to = self._default_period(date_from, date_to)
+        date_from, date_to = self._default_period(closing_day, date_from, date_to)
         totals = self.repo.totals_by_type(user_id, date_from, date_to)
         income = totals[FlowType.INCOME]
         expense = totals[FlowType.EXPENSE]
@@ -77,11 +121,12 @@ class DashboardService:
     def category_breakdown(
         self,
         user_id: str,
+        closing_day: int,
         type: FlowType,
         date_from: datetime | None,
         date_to: datetime | None,
     ) -> list[CategoryBreakdownItem]:
-        date_from, date_to = self._default_period(date_from, date_to)
+        date_from, date_to = self._default_period(closing_day, date_from, date_to)
         rows = self.repo.totals_by_category(user_id, date_from, date_to, type)
         items = [
             CategoryBreakdownItem(
@@ -94,6 +139,22 @@ class DashboardService:
         ]
         items.sort(key=lambda i: i.total, reverse=True)
         return items
+
+    def cycle_view(self, closing_day: int) -> CycleViewResponse:
+        """Decide se mostra só o ciclo em aberto (ainda não chegou no dia de
+        fechamento desse mês) ou o ciclo fechado + o novo em aberto (já
+        passou do fechamento). Ver CycleViewResponse."""
+        now = datetime.now(timezone.utc)
+        this_month_close = _closing_instant(closing_day, now.year, now.month)
+        open_start, open_end = _cycle_period(closing_day, now)
+        open_period = CyclePeriod(date_from=open_start, date_to=open_end)
+
+        if now <= this_month_close:
+            return CycleViewResponse(closed=None, open=open_period)
+
+        closed_start, closed_end = _cycle_period(closing_day, this_month_close)
+        closed_period = CyclePeriod(date_from=closed_start, date_to=closed_end)
+        return CycleViewResponse(closed=closed_period, open=open_period)
 
     def monthly_evolution(self, user_id: str, months: int) -> list[MonthlyEvolutionItem]:
         rows = self.repo.monthly_evolution(user_id, months)

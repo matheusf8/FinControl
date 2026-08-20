@@ -48,3 +48,15 @@ export type WeeklySummaryResponse = {
   net: string
   days: DayTotal[] // sempre 7 itens, segunda a domingo
 }
+
+export type CyclePeriod = {
+  date_from: string
+  date_to: string
+}
+
+export type CycleViewResponse = {
+  // null enquanto o ciclo corrente ainda não fechou (só existe uma fatura
+  // relevante nesse caso) — ver backend/app/schemas/dashboard.py
+  closed: CyclePeriod | null
+  open: CyclePeriod
+}

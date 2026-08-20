@@ -1,6 +1,13 @@
 """Testes do dashboard: saldos, resumo, breakdown por categoria e evolução mensal."""
-import calendar
 from datetime import datetime, timedelta, timezone
+
+from app.services.dashboard_service import _cycle_period, _closing_instant
+
+
+def _parse(iso: str) -> datetime:
+    # Pydantic serializa datetime UTC com sufixo "Z"; datetime.fromisoformat
+    # só entende "+00:00" antes do Python 3.11 — normaliza pra comparar.
+    return datetime.fromisoformat(iso.replace("Z", "+00:00"))
 
 
 def _create_account(client, headers, name="Conta", initial_balance="0"):
@@ -58,21 +65,45 @@ def test_summary_defaults_to_current_month(client, auth_headers):
     assert body["net"] == "600.00"
 
 
-def test_summary_includes_transactions_later_in_the_month(client, auth_headers):
-    """Regressão: o período padrão ('mês corrente') não pode ir só até 'agora'
-    — um lançamento datado mais tarde no mesmo mês precisa contar também."""
+def test_summary_includes_transactions_at_end_of_cycle(client, auth_headers):
+    """Regressão: o período padrão (ciclo financeiro do usuário) não pode ir
+    só até 'agora' — um lançamento datado mais tarde no mesmo ciclo precisa
+    contar também, mesmo perto do fechamento."""
     account = _create_account(client, auth_headers)
     now = datetime.now(timezone.utc)
-    last_day = calendar.monthrange(now.year, now.month)[1]
-    later_this_month = now.replace(day=last_day, hour=23, minute=0, second=0, microsecond=0)
+    _, cycle_end = _cycle_period(24, now)  # 24 é o cycle_closing_day padrão do usuário
 
     _create_transaction(
-        client, auth_headers, account["id"], "150.00", "expense", later_this_month.isoformat()
+        client, auth_headers, account["id"], "150.00", "expense", cycle_end.isoformat()
     )
 
     resp = client.get("/api/dashboard/summary", headers=auth_headers)
     assert resp.status_code == 200
     assert resp.json()["total_expense"] == "150.00"
+
+
+def test_summary_uses_cycle_closing_day_not_calendar_month(client, auth_headers):
+    """O período padrão do resumo é o ciclo financeiro do usuário (fecha no
+    dia configurado, igual fatura de cartão) — não o mês calendário. Um
+    lançamento logo depois do fechamento já pertence ao PRÓXIMO ciclo e não
+    deve entrar no resumo do ciclo atual."""
+    client.patch("/api/auth/me", json={"cycle_closing_day": 15}, headers=auth_headers)
+    account = _create_account(client, auth_headers)
+
+    now = datetime.now(timezone.utc)
+    _, cycle_end = _cycle_period(15, now)
+    next_cycle_start = cycle_end + timedelta(microseconds=1)
+
+    _create_transaction(
+        client, auth_headers, account["id"], "80.00", "expense", cycle_end.isoformat()
+    )
+    _create_transaction(
+        client, auth_headers, account["id"], "999.00", "expense", next_cycle_start.isoformat()
+    )
+
+    resp = client.get("/api/dashboard/summary", headers=auth_headers)
+    assert resp.status_code == 200
+    assert resp.json()["total_expense"] == "80.00"
 
 
 def test_category_breakdown_groups_by_category(client, auth_headers):
@@ -190,3 +221,51 @@ def test_weekly_summary_accepts_week_start_for_navigation(client, auth_headers):
     # semana atual não deve enxergar o lançamento da semana passada
     resp_current = client.get("/api/dashboard/weekly", headers=auth_headers)
     assert resp_current.json()["total_income"] == "0"
+
+
+def test_cycle_view_shows_only_open_before_closing_day(client, auth_headers):
+    """Igual fatura de cartão: enquanto o ciclo corrente ainda não fechou
+    (hoje ainda não passou do dia de fechamento desse mês), só existe uma
+    fatura relevante — não faz sentido mostrar uma "próxima" vazia."""
+    now = datetime.now(timezone.utc)
+    client.patch("/api/auth/me", json={"cycle_closing_day": now.day}, headers=auth_headers)
+
+    resp = client.get("/api/dashboard/cycle-view", headers=auth_headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["closed"] is None
+
+    expected_start, expected_end = _cycle_period(now.day, now)
+    assert _parse(body["open"]["date_from"]) == expected_start
+    assert _parse(body["open"]["date_to"]) == expected_end
+
+
+def test_cycle_view_shows_closed_and_open_after_closing_day(client, auth_headers):
+    """Depois que o ciclo fecha (hoje já passou do dia de fechamento desse
+    mês), mostra os dois: o que fechou (fatura a pagar) e o novo em aberto
+    (já acumulando, mesmo antes de pagar o anterior)."""
+    now = datetime.now(timezone.utc)
+    closing_day = 1  # sempre no passado dentro do mês, exceto se "hoje" for dia 1
+    client.patch("/api/auth/me", json={"cycle_closing_day": closing_day}, headers=auth_headers)
+
+    resp = client.get("/api/dashboard/cycle-view", headers=auth_headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["closed"] is not None
+
+    this_month_close = _closing_instant(closing_day, now.year, now.month)
+    expected_closed_start, expected_closed_end = _cycle_period(closing_day, this_month_close)
+    expected_open_start, expected_open_end = _cycle_period(closing_day, now)
+
+    assert _parse(body["closed"]["date_from"]) == expected_closed_start
+    assert _parse(body["closed"]["date_to"]) == expected_closed_end
+    assert _parse(body["open"]["date_from"]) == expected_open_start
+    assert _parse(body["open"]["date_to"]) == expected_open_end
+
+    # o fechado termina exatamente onde o aberto começa (sem buraco nem sobreposição)
+    assert expected_open_start - expected_closed_end == timedelta(microseconds=1)
+
+
+def test_cycle_view_requires_authentication(client):
+    resp = client.get("/api/dashboard/cycle-view")
+    assert resp.status_code == 401

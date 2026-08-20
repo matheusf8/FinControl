@@ -11,6 +11,7 @@ from app.models.user import User
 from app.schemas.dashboard import (
     BalancesResponse,
     CategoryBreakdownItem,
+    CycleViewResponse,
     MonthlyEvolutionItem,
     SummaryResponse,
     WeeklySummaryResponse,
@@ -35,7 +36,9 @@ def get_summary(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> SummaryResponse:
-    return DashboardService(db).summary(current_user.id, date_from, date_to)
+    return DashboardService(db).summary(
+        current_user.id, current_user.cycle_closing_day, date_from, date_to
+    )
 
 
 @router.get("/by-category", response_model=list[CategoryBreakdownItem])
@@ -46,7 +49,19 @@ def get_category_breakdown(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[CategoryBreakdownItem]:
-    return DashboardService(db).category_breakdown(current_user.id, type, date_from, date_to)
+    return DashboardService(db).category_breakdown(
+        current_user.id, current_user.cycle_closing_day, type, date_from, date_to
+    )
+
+
+@router.get("/cycle-view", response_model=CycleViewResponse)
+def get_cycle_view(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CycleViewResponse:
+    """Diz pro front se é pra mostrar só a fatura em aberto (ainda não
+    fechou esse mês) ou a fatura fechada + a nova em aberto (já fechou)."""
+    return DashboardService(db).cycle_view(current_user.cycle_closing_day)
 
 
 @router.get("/monthly-evolution", response_model=list[MonthlyEvolutionItem])

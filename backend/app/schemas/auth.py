@@ -27,6 +27,14 @@ class UserResponse(BaseModel):
     email: EmailStr
     full_name: str | None
     created_at: datetime
+    cycle_closing_day: int
+
+
+class UserSettingsUpdate(BaseModel):
+    # Dia que fecha o ciclo financeiro do usuário (igual fechamento de fatura
+    # de cartão) — define o período do resumo do dashboard. Cada usuário tem
+    # o seu (dia de pagar as contas varia de pessoa pra pessoa).
+    cycle_closing_day: int = Field(ge=1, le=31)
 
 
 class Token(BaseModel):

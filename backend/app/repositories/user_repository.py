@@ -20,3 +20,9 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def update_cycle_closing_day(self, user: User, cycle_closing_day: int) -> User:
+        user.cycle_closing_day = cycle_closing_day
+        self.db.commit()
+        self.db.refresh(user)
+        return user

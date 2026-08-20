@@ -4,6 +4,9 @@ export type User = {
   email: string
   full_name: string | null
   created_at: string
+  // Dia que fecha o ciclo financeiro do usuário (igual fechamento de fatura
+  // de cartão) — define o período do resumo do dashboard.
+  cycle_closing_day: number
 }
 
 export type Token = {

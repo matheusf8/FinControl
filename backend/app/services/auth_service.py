@@ -70,6 +70,12 @@ class AuthService:
 
         return self._issue_tokens(user_id)
 
+    def update_cycle_closing_day(self, user_id: str, cycle_closing_day: int) -> User:
+        user = self.users.get_by_id(user_id)
+        if not user:
+            raise UserNotFoundError(user_id)
+        return self.users.update_cycle_closing_day(user, cycle_closing_day)
+
     def _issue_tokens(self, user_id: str) -> Token:
         return Token(
             access_token=create_access_token(user_id),

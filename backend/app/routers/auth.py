@@ -6,7 +6,14 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.rate_limit import is_locked, register_attempt, register_failure, register_success
 from app.models.user import User
-from app.schemas.auth import Token, TokenRefreshRequest, UserCreate, UserLogin, UserResponse
+from app.schemas.auth import (
+    Token,
+    TokenRefreshRequest,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    UserSettingsUpdate,
+)
 from app.services.auth_service import (
     AuthService,
     EmailAlreadyRegisteredError,
@@ -83,3 +90,12 @@ def refresh(data: TokenRefreshRequest, db: Session = Depends(get_db)) -> Token:
 @router.get("/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+def update_settings(
+    data: UserSettingsUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> User:
+    return AuthService(db).update_cycle_closing_day(current_user.id, data.cycle_closing_day)

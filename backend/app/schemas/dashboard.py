@@ -51,3 +51,18 @@ class WeeklySummaryResponse(BaseModel):
     total_expense: Decimal
     net: Decimal
     days: list[DayTotal]  # sempre 7 itens, segunda a domingo, dias sem lançamento vêm zerados
+
+
+class CyclePeriod(BaseModel):
+    date_from: datetime
+    date_to: datetime
+
+
+class CycleViewResponse(BaseModel):
+    """Igual fatura de cartão: enquanto o ciclo corrente ainda não fechou,
+    só existe uma fatura relevante (`open`, `closed` vem nulo). Depois que
+    fecha, `closed` é a fatura que acabou de fechar (valor final, aguardando
+    pagamento) e `open` já é a nova, começando a acumular."""
+
+    closed: CyclePeriod | None
+    open: CyclePeriod

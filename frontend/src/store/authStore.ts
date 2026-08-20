@@ -8,6 +8,7 @@ type AuthState = {
   refreshToken: string | null
   setAuth: (params: { user: User; accessToken: string; refreshToken: string }) => void
   setTokens: (params: { accessToken: string; refreshToken: string }) => void
+  updateUser: (user: User) => void
   logout: () => void
 }
 
@@ -21,6 +22,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       setAuth: ({ user, accessToken, refreshToken }) => set({ user, accessToken, refreshToken }),
       setTokens: ({ accessToken, refreshToken }) => set({ accessToken, refreshToken }),
+      updateUser: (user) => set({ user }),
       logout: () => set({ user: null, accessToken: null, refreshToken: null }),
     }),
     { name: 'fincontrol-auth' },
