@@ -149,46 +149,55 @@ function CyclePanel({
           Nenhuma despesa lançada nesse período ainda.
         </p>
       ) : (
-        <ResponsiveContainer width="100%" height={240}>
-          <PieChart>
-            <Pie
-              data={pieData}
-              dataKey="value"
-              nameKey="name"
-              outerRadius={80}
-              label={renderPercentLabel}
-              labelLine={false}
-              // A animação de entrada (crescer do 0°) trava numa fatia
-              // minúscula em alguns navegadores/ambientes — recharts nunca
-              // termina o tween e a pizza fica "achatada". Sem impacto
-              // visual perceptível desligar, e evita esse travamento.
-              isAnimationActive={false}
-            >
-              {pieData.map((entry, index) => (
-                <Cell
-                  key={entry.name}
-                  fill={entry.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]}
+        <>
+          <ResponsiveContainer width="100%" height={200}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                outerRadius={75}
+                label={renderPercentLabel}
+                labelLine={false}
+                // A animação de entrada (crescer do 0°) trava numa fatia
+                // minúscula em alguns navegadores/ambientes — recharts nunca
+                // termina o tween e a pizza fica "achatada". Sem impacto
+                // visual perceptível desligar, e evita esse travamento.
+                isAnimationActive={false}
+              >
+                {pieData.map((entry, index) => (
+                  <Cell
+                    key={entry.name}
+                    fill={entry.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value) =>
+                  Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                }
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          {/* Legenda própria em HTML (não a <Legend> do recharts): essa vive
+              dentro da altura fixa do gráfico e, com muitas categorias (ex:
+              9), o texto não cabia e sobrepunha ("Compras" em cima de
+              "Farmácia"). Em HTML puro a lista só cresce pra baixo com
+              flex-wrap — nunca mais corta, não importa quantas categorias. */}
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+            {pieData.map((entry, index) => (
+              <div key={entry.name} className="flex items-center gap-1.5 text-sm">
+                <span
+                  className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: entry.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length] }}
                 />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value) =>
-                Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-              }
-            />
-            <Legend
-              formatter={(value, entry) => {
-                const item = (entry as { payload?: { value: number } }).payload
-                return (
-                  <span className="text-gray-700 dark:text-gray-300">
-                    {value}
-                    {item ? ` — ${formatCurrency(String(item.value))}` : ''}
-                  </span>
-                )
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+                <span className="text-gray-700 dark:text-gray-300">
+                  {entry.name} — {formatCurrency(String(entry.value))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
