@@ -10,6 +10,10 @@ export type Account = {
   name: string
   type: AccountType
   initial_balance: string
+  // "Saldo em conta": editado à mão pelo usuário (quanto ele tem no banco de
+  // verdade agora), independente do "Saldo total" calculado — null se nunca
+  // configurado.
+  real_balance: string | null
   created_at: string
 }
 
@@ -17,6 +21,11 @@ export type AccountPayload = {
   name: string
   type: AccountType
   initial_balance?: string
+}
+
+export type InvoicePaymentPayload = {
+  amount: string
+  description?: string
 }
 
 export type Category = {

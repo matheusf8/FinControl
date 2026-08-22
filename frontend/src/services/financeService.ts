@@ -4,6 +4,7 @@ import type {
   AccountPayload,
   Category,
   CategoryPayload,
+  InvoicePaymentPayload,
   Transaction,
   TransactionFilters,
   TransactionPayload,
@@ -12,9 +13,13 @@ import type {
 export const accountService = {
   list: () => api.get<Account[]>('/accounts').then((r) => r.data),
   create: (payload: AccountPayload) => api.post<Account>('/accounts', payload).then((r) => r.data),
-  update: (id: string, payload: Partial<AccountPayload>) =>
+  update: (id: string, payload: Partial<AccountPayload> & { real_balance?: string }) =>
     api.put<Account>(`/accounts/${id}`, payload).then((r) => r.data),
   remove: (id: string) => api.delete(`/accounts/${id}`).then(() => undefined),
+  // Abate `amount` da fatura fechada e desconta o mesmo valor do "saldo em
+  // conta" dessa conta — ver backend/app/services/account_service.py.
+  payInvoice: (accountId: string, payload: InvoicePaymentPayload) =>
+    api.post<Account>(`/accounts/${accountId}/pay-invoice`, payload).then((r) => r.data),
 }
 
 export const categoryService = {

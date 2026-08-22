@@ -78,11 +78,18 @@ class DashboardService:
     def balances(self, user_id: str) -> BalancesResponse:
         rows = self.repo.account_balances(user_id)
         accounts = [
-            AccountBalance(account_id=account.id, account_name=account.name, balance=balance)
+            AccountBalance(
+                account_id=account.id,
+                account_name=account.name,
+                balance=balance,
+                real_balance=account.real_balance,
+            )
             for account, balance in rows
         ]
         total = sum((a.balance for a in accounts), Decimal("0"))
-        return BalancesResponse(total_balance=total, accounts=accounts)
+        real_values = [a.real_balance for a in accounts if a.real_balance is not None]
+        total_real = sum(real_values, Decimal("0")) if real_values else None
+        return BalancesResponse(total_balance=total, total_real_balance=total_real, accounts=accounts)
 
     def _default_period(
         self, closing_day: int, date_from: datetime | None, date_to: datetime | None

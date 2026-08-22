@@ -9,10 +9,14 @@ class AccountBalance(BaseModel):
     account_id: str
     account_name: str
     balance: Decimal
+    real_balance: Decimal | None  # "saldo em conta" editado à mão, ver Account.real_balance
 
 
 class BalancesResponse(BaseModel):
     total_balance: Decimal
+    # Soma do "saldo em conta" das contas que têm o valor configurado; None
+    # se nenhuma conta tiver configurado ainda (não confundir com soma zero).
+    total_real_balance: Decimal | None
     accounts: list[AccountBalance]
 
 

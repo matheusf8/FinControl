@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   CartesianGrid,
   Cell,
@@ -14,8 +15,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { toApiAmount } from '../lib/money'
 import { authService } from '../services/authService'
 import { dashboardService } from '../services/dashboardService'
+import { accountService } from '../services/financeService'
 import { useAuthStore } from '../store/authStore'
 import type { CategoryBreakdownItem, CyclePeriod, SummaryResponse } from '../types/dashboard'
 
@@ -97,12 +100,14 @@ function CyclePanel({
   period,
   summary,
   byCategory,
+  footer,
 }: {
   title: string
   hint?: string
   period: CyclePeriod
   summary: SummaryResponse | undefined
   byCategory: CategoryBreakdownItem[] | undefined
+  footer?: ReactNode
 }) {
   const pieData = (byCategory ?? []).map((item) => ({
     name: item.category_name,
@@ -199,6 +204,60 @@ function CyclePanel({
           </div>
         </>
       )}
+      {footer}
+    </div>
+  )
+}
+
+// Formulário pra abater um valor da fatura fechada usando o "saldo em
+// conta" — some do saldo e reduz o total da fatura, igual pagar de verdade.
+function PayInvoiceForm({
+  onPay,
+  isPending,
+  error,
+}: {
+  onPay: (amount: string) => void
+  isPending: boolean
+  error: string | null
+}) {
+  const [amount, setAmount] = useState('')
+  const [localError, setLocalError] = useState<string | null>(null)
+
+  const handleSubmit = () => {
+    setLocalError(null)
+    const apiAmount = toApiAmount(amount)
+    if (!apiAmount || Number(apiAmount) <= 0) {
+      setLocalError('Informe um valor válido')
+      return
+    }
+    onPay(apiAmount)
+    setAmount('')
+  }
+
+  return (
+    <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+        Abater da fatura com o saldo em conta
+      </label>
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          inputMode="decimal"
+          placeholder="0,00"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-28 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
+        />
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isPending}
+          className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          Abater
+        </button>
+      </div>
+      {(localError || error) && <p className="text-sm text-red-600 mt-1">{localError || error}</p>}
     </div>
   )
 }
@@ -282,6 +341,64 @@ export function DashboardPage() {
     updateClosingDayMutation.mutate(day)
   }
 
+  // "Saldo total" (calculado: receitas - despesas de todo o histórico) vs
+  // "Saldo em conta" (você edita à mão, quanto tem no banco de verdade) —
+  // alterna com um botão porque são conceitos diferentes e mostrar os dois
+  // juntos confundia.
+  const [balanceView, setBalanceView] = useState<'total' | 'real'>('total')
+  const [editingRealBalance, setEditingRealBalance] = useState(false)
+  const [realBalanceInput, setRealBalanceInput] = useState('')
+  const [realBalanceError, setRealBalanceError] = useState<string | null>(null)
+
+  // Único usada pra editar/abater: a primeira conta do usuário. O app hoje
+  // só lida com uma conta na prática — se um dia tiver várias, isso precisa
+  // virar um seletor.
+  const primaryAccountId = balances?.accounts[0]?.account_id
+
+  const updateRealBalanceMutation = useMutation({
+    mutationFn: (value: string) => accountService.update(primaryAccountId!, { real_balance: value }),
+    onSuccess: () => {
+      setEditingRealBalance(false)
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'balances'] })
+    },
+    onError: () => setRealBalanceError('Não foi possível salvar o saldo em conta'),
+  })
+
+  const handleSaveRealBalance = () => {
+    setRealBalanceError(null)
+    const apiAmount = toApiAmount(realBalanceInput)
+    if (apiAmount === null) {
+      setRealBalanceError('Informe um valor válido')
+      return
+    }
+    if (!primaryAccountId) {
+      setRealBalanceError('Nenhuma conta cadastrada ainda')
+      return
+    }
+    updateRealBalanceMutation.mutate(apiAmount)
+  }
+
+  const [payInvoiceError, setPayInvoiceError] = useState<string | null>(null)
+  const payInvoiceMutation = useMutation({
+    mutationFn: (amount: string) => accountService.payInvoice(primaryAccountId!, { amount }),
+    onSuccess: () => {
+      setPayInvoiceError(null)
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'balances'] })
+      // O valor abatido muda o total da fatura fechada — mesma lógica do
+      // "Fecha todo dia": a chave da query (date_from do período) não muda,
+      // então precisa invalidar explicitamente pra buscar de novo.
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary', 'closed'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'by-category', 'closed'] })
+    },
+    onError: (err) => {
+      setPayInvoiceError(
+        isAxiosError(err) && err.response?.status === 409
+          ? 'Ainda não tem fatura fechada nesse ciclo'
+          : 'Não foi possível abater da fatura',
+      )
+    },
+  })
+
   const evolutionData = (evolution ?? []).map((item) => ({
     month: formatMonth(item.month),
     Receitas: Number(item.income),
@@ -299,10 +416,60 @@ export function DashboardPage() {
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Saldo total</p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-            {balances ? formatCurrency(balances.total_balance) : '—'}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {balanceView === 'total' ? 'Saldo total' : 'Saldo em conta'}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setBalanceView((v) => (v === 'total' ? 'real' : 'total'))
+                setEditingRealBalance(false)
+                setRealBalanceError(null)
+              }}
+              className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
+              trocar
+            </button>
+          </div>
+          {balanceView === 'total' ? (
+            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+              {balances ? formatCurrency(balances.total_balance) : '—'}
+            </p>
+          ) : editingRealBalance ? (
+            <div className="flex items-center gap-2 mt-1">
+              <input
+                type="text"
+                inputMode="decimal"
+                autoFocus
+                placeholder="0,00"
+                value={realBalanceInput}
+                onChange={(e) => setRealBalanceInput(e.target.value)}
+                className="w-28 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-gray-900 dark:text-gray-100"
+              />
+              <button
+                type="button"
+                onClick={handleSaveRealBalance}
+                disabled={updateRealBalanceMutation.isPending}
+                className="rounded bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                Salvar
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setRealBalanceInput(balances?.total_real_balance ?? '')
+                setEditingRealBalance(true)
+              }}
+              className="block text-2xl font-semibold text-gray-900 dark:text-gray-100 hover:underline text-left"
+              title="Clique pra editar"
+            >
+              {balances?.total_real_balance != null ? formatCurrency(balances.total_real_balance) : 'Definir valor'}
+            </button>
+          )}
+          {realBalanceError && <p className="text-sm text-red-600 mt-1">{realBalanceError}</p>}
         </div>
         <div className="flex items-end gap-2">
           <div>
@@ -346,6 +513,15 @@ export function DashboardPage() {
               period={closedPeriod}
               summary={closedSummary}
               byCategory={closedByCategory}
+              footer={
+                primaryAccountId ? (
+                  <PayInvoiceForm
+                    onPay={(amount) => payInvoiceMutation.mutate(amount)}
+                    isPending={payInvoiceMutation.isPending}
+                    error={payInvoiceError}
+                  />
+                ) : undefined
+              }
             />
           )}
           {openPeriod && (

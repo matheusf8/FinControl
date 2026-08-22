@@ -33,6 +33,12 @@ class Account(Base):
     # Saldo de partida ao cadastrar a conta; o saldo atual é calculado somando
     # as transações (Sprint 5), não é um campo mantido aqui.
     initial_balance: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=Decimal("0"))
+    # "Saldo em conta": valor editado manualmente pelo usuário (quanto ele
+    # realmente tem no banco agora), independente do cálculo de
+    # initial_balance + receitas - despesas ("Saldo total"). Null = nunca
+    # configurado. Pagar uma fatura (AccountService.pay_invoice) desconta
+    # daqui, imitando o dinheiro saindo da conta de verdade.
+    real_balance: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now_utc, nullable=False)
 
     # Apagar a conta apaga junto o histórico de transações dela.

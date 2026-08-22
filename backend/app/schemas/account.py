@@ -17,6 +17,7 @@ class AccountUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     type: AccountType | None = None
     initial_balance: Decimal | None = None
+    real_balance: Decimal | None = None
 
 
 class AccountResponse(BaseModel):
@@ -26,4 +27,12 @@ class AccountResponse(BaseModel):
     name: str
     type: AccountType
     initial_balance: Decimal
+    real_balance: Decimal | None
     created_at: datetime
+
+
+class InvoicePaymentCreate(BaseModel):
+    # Valor abatido da fatura fechada (não precisa ser o total dela — dá pra
+    # abater parcial, igual pagamento parcial de fatura de verdade).
+    amount: Decimal = Field(gt=0)
+    description: str | None = Field(default=None, max_length=255)

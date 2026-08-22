@@ -5,10 +5,12 @@ export type AccountBalance = {
   account_id: string
   account_name: string
   balance: string
+  real_balance: string | null
 }
 
 export type BalancesResponse = {
   total_balance: string
+  total_real_balance: string | null
   accounts: AccountBalance[]
 }
 
