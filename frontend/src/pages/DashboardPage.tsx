@@ -109,11 +109,20 @@ function CyclePanel({
   byCategory: CategoryBreakdownItem[] | undefined
   footer?: ReactNode
 }) {
-  const pieData = (byCategory ?? []).map((item) => ({
-    name: item.category_name,
-    value: Number(item.total),
-    color: item.color,
-  }))
+  // Só categorias com total > 0 entram na pizza: um abatimento/crédito
+  // lançado como despesa negativa (ver account_service.pay_invoice) reduz o
+  // "Despesa" total corretamente, mas incluído aqui distorcia a base do
+  // cálculo de cada fatia — a % de cada categoria passava a ser sobre
+  // "despesas líquidas do abatimento" em vez de "despesas brutas", inflando
+  // todo mundo. O total exibido acima (summary.total_expense) já é líquido
+  // e continua correto; só a pizza ignora entradas <= 0.
+  const pieData = (byCategory ?? [])
+    .filter((item) => Number(item.total) > 0)
+    .map((item) => ({
+      name: item.category_name,
+      value: Number(item.total),
+      color: item.color,
+    }))
   const netIsNegative = summary ? Number(summary.net) < 0 : false
 
   return (

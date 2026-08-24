@@ -25,6 +25,10 @@ function todayIsoDate() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function formatCurrency(value: string): string {
+  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
 export function TransactionsPage() {
   const queryClient = useQueryClient()
   const [error, setError] = useState<string | null>(null)
@@ -325,7 +329,7 @@ export function TransactionsPage() {
             </div>
             <div className="flex items-center gap-3">
               <span className={`font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                {t.type === 'income' ? '+' : '-'} R$ {t.amount}
+                {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
               </span>
               <button
                 type="button"
