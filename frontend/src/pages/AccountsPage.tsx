@@ -2,8 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
-import { toApiAmount } from '../lib/money'
 import { accountService } from '../services/financeService'
 import type { AccountType } from '../types/finance'
 
@@ -18,13 +18,13 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 const accountSchema = z.object({
   name: z.string().min(1, 'Informe um nome').max(120),
   type: z.enum(['checking', 'savings', 'wallet', 'investment', 'other']),
-  initialBalance: z.string().optional(),
 })
 
 type AccountForm = z.infer<typeof accountSchema>
 
 export function AccountsPage() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
 
   const { data: accounts, isLoading } = useQuery({
@@ -39,14 +39,17 @@ export function AccountsPage() {
     formState: { errors, isSubmitting },
   } = useForm<AccountForm>({
     resolver: zodResolver(accountSchema),
-    defaultValues: { type: 'checking', name: '', initialBalance: '' },
+    defaultValues: { type: 'checking', name: '' },
   })
 
   const createMutation = useMutation({
     mutationFn: accountService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] })
-      reset({ name: '', type: 'checking', initialBalance: '' })
+      reset({ name: '', type: 'checking' })
+      // Depois de criar a conta não tem mais nada pra fazer nessa tela — o
+      // "saldo em conta" de verdade se edita direto no Dashboard, não aqui.
+      navigate('/dashboard')
     },
     onError: () => setError('Não foi possível criar a conta'),
   })
@@ -58,11 +61,10 @@ export function AccountsPage() {
 
   const onSubmit = (data: AccountForm) => {
     setError(null)
-    createMutation.mutate({
-      name: data.name,
-      type: data.type,
-      initial_balance: (data.initialBalance && toApiAmount(data.initialBalance)) || '0',
-    })
+    // initial_balance não é mais pedido aqui: era só o ponto de partida do
+    // "saldo total" calculado, que foi descartado — o que importa agora é o
+    // "saldo em conta" editado à mão no Dashboard, depois de criar a conta.
+    createMutation.mutate({ name: data.name, type: data.type, initial_balance: '0' })
   }
 
   return (
@@ -103,26 +105,6 @@ export function AccountsPage() {
           </select>
         </div>
 
-        <div>
-          <label
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            htmlFor="initialBalance"
-          >
-            Saldo inicial
-          </label>
-          <input
-            id="initialBalance"
-            placeholder="0,00"
-            className="mt-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
-            {...register('initialBalance')}
-          />
-          <p className="mt-1 max-w-[16rem] text-xs text-gray-400 dark:text-gray-500">
-            Ponto de partida do cálculo automático (receitas − despesas) — hoje
-            não aparece em nenhuma tela, já que o "Saldo em conta" é editado à
-            mão. Pode deixar em branco/0.
-          </p>
-        </div>
-
         <button
           type="submit"
           disabled={isSubmitting}
@@ -143,7 +125,7 @@ export function AccountsPage() {
             <div>
               <p className="font-medium text-gray-900 dark:text-gray-100">{account.name}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {ACCOUNT_TYPE_LABELS[account.type]} · saldo inicial R$ {account.initial_balance}
+                {ACCOUNT_TYPE_LABELS[account.type]}
               </p>
             </div>
             <button

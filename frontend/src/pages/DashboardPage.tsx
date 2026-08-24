@@ -547,21 +547,6 @@ export function DashboardPage() {
         </ResponsiveContainer>
       </div>
 
-      {balances && balances.accounts.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow divide-y divide-gray-200 dark:divide-gray-700">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 p-4 pb-2">
-            Saldo por conta
-          </h2>
-          {balances.accounts.map((account) => (
-            <div key={account.account_id} className="p-4 flex items-center justify-between">
-              <span className="text-gray-900 dark:text-gray-100">{account.account_name}</span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {formatCurrency(account.balance)}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
