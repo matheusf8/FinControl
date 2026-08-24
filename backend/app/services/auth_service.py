@@ -18,7 +18,7 @@ from app.core.security import (
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import Token, UserCreate
-from app.services.email_service import send_email
+from app.services.email_service import EmailSendError, send_email
 
 # Link de redefinição válido por 1h — janela curta o bastante pra não valer a
 # pena atacar, longa o bastante pra dar tempo de abrir o e-mail com calma.
@@ -103,17 +103,27 @@ class AuthService:
         self.users.set_reset_token(user, token_hash, expires_at)
 
         link = f"{reset_url_base.rstrip('/')}/reset-password?token={token}"
-        send_email(
-            to=user.email,
-            subject="Redefinir senha — FinControl",
-            html=(
-                "<p>Foi pedida a redefinição de senha da sua conta no FinControl.</p>"
-                f'<p><a href="{link}">Clique aqui pra escolher uma senha nova</a> '
-                "(link válido por 1 hora).</p>"
-                "<p>Se não foi você quem pediu, é só ignorar este e-mail — sua senha "
-                "continua a mesma.</p>"
-            ),
-        )
+        try:
+            send_email(
+                to=user.email,
+                subject="Redefinir senha — FinControl",
+                html=(
+                    "<p>Foi pedida a redefinição de senha da sua conta no FinControl.</p>"
+                    f'<p><a href="{link}">Clique aqui pra escolher uma senha nova</a> '
+                    "(link válido por 1 hora).</p>"
+                    "<p>Se não foi você quem pediu, é só ignorar este e-mail — sua senha "
+                    "continua a mesma.</p>"
+                ),
+            )
+        except EmailSendError:
+            # Não deixa o /forgot-password quebrar com 500 se o Resend
+            # recusar o envio (ex: conta sandbox, sem domínio verificado, só
+            # manda pro próprio e-mail que criou a API key — qualquer outro
+            # destinatário é rejeitado). O token já foi salvo; se o e-mail não
+            # chegou, a pessoa só vê "se existir, chegou um link" e tenta de
+            # novo depois — sem vazar que o envio falhou especificamente pra
+            # esse e-mail (isso também seria user enumeration).
+            pass
 
     def reset_password(self, token: str, new_password: str) -> None:
         token_hash = hashlib.sha256(token.encode()).hexdigest()

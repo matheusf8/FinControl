@@ -2,6 +2,7 @@
 from app.core import rate_limit
 from app.core.config import settings
 from app.models.user import User
+from app.services.email_service import EmailSendError
 
 
 def test_register_creates_user(client):
@@ -347,3 +348,24 @@ def test_reset_password_with_expired_token_fails(client, monkeypatch, db_session
         "/api/auth/reset-password", json={"token": token, "new_password": "senhaNova123"}
     )
     assert resp.status_code == 400
+
+
+def test_forgot_password_still_returns_204_if_resend_rejects_the_send(client, monkeypatch):
+    """Sandbox do Resend sem domínio verificado só manda pro e-mail que
+    criou a API key — qualquer outro destinatário é rejeitado pela API. Isso
+    não pode virar 500 nem revelar que o envio falhou (senão dá pra usar
+    esse endpoint pra descobrir se um e-mail tem conta ou não)."""
+
+    def failing_send_email(*, to: str, subject: str, html: str) -> None:
+        raise EmailSendError()
+
+    monkeypatch.setattr("app.services.auth_service.send_email", failing_send_email)
+    client.post(
+        "/api/auth/register", json={"email": "resendrecusa@example.com", "password": "senhaAntiga1"}
+    )
+
+    resp = client.post(
+        "/api/auth/forgot-password",
+        json={"email": "resendrecusa@example.com", "reset_url_base": "https://app.exemplo.com"},
+    )
+    assert resp.status_code == 204
