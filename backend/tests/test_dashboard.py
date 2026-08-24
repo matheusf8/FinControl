@@ -247,6 +247,11 @@ def test_cycle_view_shows_closed_and_open_after_closing_day(client, auth_headers
     now = datetime.now(timezone.utc)
     closing_day = 1  # sempre no passado dentro do mês, exceto se "hoje" for dia 1
     client.patch("/api/auth/me", json={"cycle_closing_day": closing_day}, headers=auth_headers)
+    account = _create_account(client, auth_headers)
+    this_month_close = _closing_instant(closing_day, now.year, now.month)
+    _create_transaction(
+        client, auth_headers, account["id"], "80.00", "expense", this_month_close.isoformat()
+    )
 
     resp = client.get("/api/dashboard/cycle-view", headers=auth_headers)
     assert resp.status_code == 200
@@ -264,6 +269,32 @@ def test_cycle_view_shows_closed_and_open_after_closing_day(client, auth_headers
 
     # o fechado termina exatamente onde o aberto começa (sem buraco nem sobreposição)
     assert expected_open_start - expected_closed_end == timedelta(microseconds=1)
+
+
+def test_cycle_view_hides_closed_cycle_once_fully_abated(client, auth_headers):
+    """O app não sabe quando o usuário pagou de verdade (isso acontece no
+    banco) — usa "abatido até <= 0" como sinal de "já paguei", e some com o
+    painel da fatura fechada, sobrando só a em aberto."""
+    now = datetime.now(timezone.utc)
+    closing_day = 1
+    client.patch("/api/auth/me", json={"cycle_closing_day": closing_day}, headers=auth_headers)
+    account = _create_account(client, auth_headers)
+    this_month_close = _closing_instant(closing_day, now.year, now.month)
+    _create_transaction(
+        client, auth_headers, account["id"], "80.00", "expense", this_month_close.isoformat()
+    )
+
+    # ainda não abateu tudo: continua mostrando a fatura fechada
+    resp = client.get("/api/dashboard/cycle-view", headers=auth_headers)
+    assert resp.json()["closed"] is not None
+
+    # abate o valor inteiro (equivalente a "já paguei")
+    client.post(
+        f"/api/accounts/{account['id']}/pay-invoice", json={"amount": "80.00"}, headers=auth_headers
+    )
+
+    resp = client.get("/api/dashboard/cycle-view", headers=auth_headers)
+    assert resp.json()["closed"] is None
 
 
 def test_cycle_view_requires_authentication(client):

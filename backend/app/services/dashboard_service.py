@@ -147,10 +147,16 @@ class DashboardService:
         items.sort(key=lambda i: i.total, reverse=True)
         return items
 
-    def cycle_view(self, closing_day: int) -> CycleViewResponse:
+    def cycle_view(self, user_id: str, closing_day: int) -> CycleViewResponse:
         """Decide se mostra só o ciclo em aberto (ainda não chegou no dia de
         fechamento desse mês) ou o ciclo fechado + o novo em aberto (já
-        passou do fechamento). Ver CycleViewResponse."""
+        passou do fechamento). Ver CycleViewResponse.
+
+        Uma fatura fechada some da tela sozinha assim que ela é quitada (via
+        "abater da fatura" até zerar ou passar de zero) — o app não sabe
+        quando você pagou de verdade (isso acontece no banco, fora daqui),
+        então usa "abatida até <= 0" como sinal de "já paguei, não preciso
+        mais ver essa fatura"."""
         now = datetime.now(timezone.utc)
         this_month_close = _closing_instant(closing_day, now.year, now.month)
         open_start, open_end = _cycle_period(closing_day, now)
@@ -160,6 +166,10 @@ class DashboardService:
             return CycleViewResponse(closed=None, open=open_period)
 
         closed_start, closed_end = _cycle_period(closing_day, this_month_close)
+        totals = self.repo.totals_by_type(user_id, closed_start, closed_end)
+        if totals[FlowType.EXPENSE] <= 0:
+            return CycleViewResponse(closed=None, open=open_period)
+
         closed_period = CyclePeriod(date_from=closed_start, date_to=closed_end)
         return CycleViewResponse(closed=closed_period, open=open_period)
 

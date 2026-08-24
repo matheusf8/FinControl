@@ -60,7 +60,7 @@ class AccountService:
         próprio Nubank usa pra créditos/abatimentos na fatura dele), sem
         categoria, datado no fim do ciclo fechado."""
         account = self.get(account_id, user_id)
-        cycle = DashboardService(self.db).cycle_view(closing_day)
+        cycle = DashboardService(self.db).cycle_view(user_id, closing_day)
         if cycle.closed is None:
             raise NoClosedInvoiceError()
 

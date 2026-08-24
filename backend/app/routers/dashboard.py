@@ -61,7 +61,7 @@ def get_cycle_view(
 ) -> CycleViewResponse:
     """Diz pro front se é pra mostrar só a fatura em aberto (ainda não
     fechou esse mês) ou a fatura fechada + a nova em aberto (já fechou)."""
-    return DashboardService(db).cycle_view(current_user.cycle_closing_day)
+    return DashboardService(db).cycle_view(current_user.id, current_user.cycle_closing_day)
 
 
 @router.get("/monthly-evolution", response_model=list[MonthlyEvolutionItem])
