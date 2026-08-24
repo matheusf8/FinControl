@@ -5,9 +5,11 @@ import { AccountsPage } from './pages/AccountsPage'
 import { CardsPage } from './pages/CardsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { GoalsPage } from './pages/GoalsPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { WeeklyPage } from './pages/WeeklyPage'
 
@@ -16,6 +18,8 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route
         element={

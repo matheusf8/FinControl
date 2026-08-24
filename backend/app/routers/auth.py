@@ -7,6 +7,8 @@ from app.core.dependencies import get_current_user
 from app.core.rate_limit import is_locked, register_attempt, register_failure, register_success
 from app.models.user import User
 from app.schemas.auth import (
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
     Token,
     TokenRefreshRequest,
     UserCreate,
@@ -19,6 +21,7 @@ from app.services.auth_service import (
     EmailAlreadyRegisteredError,
     InvalidCredentialsError,
     InvalidInviteCodeError,
+    InvalidResetTokenError,
     UserNotFoundError,
 )
 
@@ -99,3 +102,32 @@ def update_settings(
     db: Session = Depends(get_db),
 ) -> User:
     return AuthService(db).update_cycle_closing_day(current_user.id, data.cycle_closing_day)
+
+
+@router.post("/forgot-password", status_code=status.HTTP_204_NO_CONTENT)
+def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)) -> None:
+    # Rate limit por e-mail — evita alguém usar esse endpoint pra spammar a
+    # caixa de entrada de outra pessoa com e-mails de redefinição.
+    rate_limit_key = f"forgot-password:{data.email.lower()}"
+    remaining = is_locked(rate_limit_key)
+    if remaining is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Muitas tentativas. Tente novamente em {int(remaining // 60) + 1} minuto(s).",
+        )
+    register_attempt(rate_limit_key)
+
+    # Sempre 204, exista ou não esse e-mail (ver AuthService.forgot_password)
+    # — a resposta não pode entregar se um e-mail tem conta ou não.
+    AuthService(db).forgot_password(data.email, data.reset_url_base)
+
+
+@router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)) -> None:
+    try:
+        AuthService(db).reset_password(data.token, data.new_password)
+    except InvalidResetTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Link inválido ou expirado — peça um novo",
+        ) from exc

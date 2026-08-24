@@ -27,3 +27,8 @@ class User(Base):
     # de pessoa pra pessoa). Default 24 só pra já vir com algo sensato antes
     # do usuário ajustar.
     cycle_closing_day: Mapped[int] = mapped_column(Integer, nullable=False, default=24)
+    # "Esqueci minha senha": guarda só o hash (sha256) do token mandado por
+    # e-mail, nunca o token em si — mesma lógica de nunca guardar senha em
+    # texto puro. Token de uso único, expira em 1h (ver AuthService.forgot_password).
+    reset_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reset_token_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

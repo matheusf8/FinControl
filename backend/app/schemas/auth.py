@@ -45,3 +45,17 @@ class Token(BaseModel):
 
 class TokenRefreshRequest(BaseModel):
     refresh_token: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+    # Origem do front que está chamando (ex: "https://fin-control-three.vercel.app"
+    # ou "http://127.0.0.1:8756" no .exe) — o backend não sabe de onde veio a
+    # chamada, então quem manda é o próprio front (window.location.origin),
+    # e o link do e-mail é montado em cima disso.
+    reset_url_base: str = Field(max_length=255)
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(min_length=8, max_length=72)

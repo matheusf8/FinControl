@@ -73,6 +73,12 @@ class Settings(BaseSettings):
     # conta. Se ficar vazio (default local/dev/testes), cadastro fica livre.
     invite_code: str | None = None
 
+    # E-mail transacional (Resend, https://resend.com) pro "esqueci minha
+    # senha". Sem RESEND_API_KEY configurada (dev/testes), o envio é só
+    # logado e pulado — ver app/services/email_service.py.
+    resend_api_key: str | None = None
+    mail_from: str = "FinControl <onboarding@resend.dev>"
+
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"), env_file_encoding="utf-8", extra="ignore"
     )

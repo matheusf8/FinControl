@@ -116,6 +116,11 @@ export function AccountsPage() {
             className="mt-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
             {...register('initialBalance')}
           />
+          <p className="mt-1 max-w-[16rem] text-xs text-gray-400 dark:text-gray-500">
+            Ponto de partida do cálculo automático (receitas − despesas) — hoje
+            não aparece em nenhuma tela, já que o "Saldo em conta" é editado à
+            mão. Pode deixar em branco/0.
+          </p>
         </div>
 
         <button

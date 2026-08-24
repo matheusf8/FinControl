@@ -26,3 +26,13 @@ export type RegisterPayload = {
   full_name?: string
   invite_code?: string
 }
+
+export type ForgotPasswordPayload = {
+  email: string
+  reset_url_base: string
+}
+
+export type ResetPasswordPayload = {
+  token: string
+  new_password: string
+}

@@ -127,7 +127,13 @@ def main() -> None:
     )
     log.info("Chamando webview.start()...")
     try:
-        webview.start(debug=False)
+        # private_mode=True é o padrão do pywebview e apaga localStorage (onde
+        # fica o token de login, ver frontend/src/store/authStore.ts) toda vez
+        # que a janela fecha — por isso pedia email/senha de novo a cada
+        # abertura mesmo o refresh token durando 7 dias. storage_path fixa
+        # onde o perfil (localStorage/cookies) fica salvo entre uma abertura
+        # e outra, do lado do .exe.
+        webview.start(debug=False, private_mode=False, storage_path=str(_log_dir / "webview_data"))
     except Exception:
         log.exception("webview.start: crashou")
         raise
