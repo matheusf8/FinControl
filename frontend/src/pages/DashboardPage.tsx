@@ -341,11 +341,11 @@ export function DashboardPage() {
     updateClosingDayMutation.mutate(day)
   }
 
-  // "Saldo total" (calculado: receitas - despesas de todo o histórico) vs
-  // "Saldo em conta" (você edita à mão, quanto tem no banco de verdade) —
-  // alterna com um botão porque são conceitos diferentes e mostrar os dois
-  // juntos confundia.
-  const [balanceView, setBalanceView] = useState<'total' | 'real'>('total')
+  // "Saldo em conta" — o único saldo mostrado no topo do dashboard. É editado
+  // à mão (quanto tem no banco de verdade); o "saldo total" calculado
+  // (receitas - despesas de todo o histórico) foi descartado por pedido do
+  // Matheus em 2026-08-24: ele prefere manter o controle manual desse valor,
+  // sem um número calculado concorrendo com ele na tela.
   const [editingRealBalance, setEditingRealBalance] = useState(false)
   const [realBalanceInput, setRealBalanceInput] = useState('')
   const [realBalanceError, setRealBalanceError] = useState<string | null>(null)
@@ -416,27 +416,8 @@ export function DashboardPage() {
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {balanceView === 'total' ? 'Saldo total' : 'Saldo em conta'}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setBalanceView((v) => (v === 'total' ? 'real' : 'total'))
-                setEditingRealBalance(false)
-                setRealBalanceError(null)
-              }}
-              className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
-              trocar
-            </button>
-          </div>
-          {balanceView === 'total' ? (
-            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-              {balances ? formatCurrency(balances.total_balance) : '—'}
-            </p>
-          ) : editingRealBalance ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Saldo em conta</p>
+          {editingRealBalance ? (
             <div className="flex items-center gap-2 mt-1">
               <input
                 type="text"

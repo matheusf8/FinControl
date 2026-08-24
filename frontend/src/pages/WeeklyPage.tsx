@@ -43,6 +43,12 @@ export function WeeklyPage() {
     queryKey: ['dashboard', 'weekly', weekStart],
     queryFn: () => dashboardService.weeklySummary(weekStart),
   })
+  // "Saldo total" calculado foi descartado (pedido do Matheus, 2026-08-24) —
+  // essa tela mostra "saldo em conta" (editado à mão no Dashboard) no lugar.
+  const { data: balances } = useQuery({
+    queryKey: ['dashboard', 'balances'],
+    queryFn: dashboardService.balances,
+  })
 
   const goToWeek = (deltaDays: number) => {
     const current = new Date(`${weekStart}T00:00:00`)
@@ -88,9 +94,9 @@ export function WeeklyPage() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Saldo total (atual)</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Saldo em conta</p>
               <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                {formatCurrency(data.total_balance)}
+                {balances?.total_real_balance != null ? formatCurrency(balances.total_real_balance) : '—'}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
