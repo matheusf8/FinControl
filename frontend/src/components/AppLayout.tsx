@@ -1,4 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
 import { NavLink, Outlet } from 'react-router-dom'
+import { accountService } from '../services/financeService'
 import { useAuthStore } from '../store/authStore'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -13,6 +15,13 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export function AppLayout() {
   const logout = useAuthStore((s) => s.logout)
   const user = useAuthStore((s) => s.user)
+  // "Contas" só serve pra criar a primeira conta (obrigatória — toda
+  // transação exige uma) e não é usada de novo depois disso na prática (o
+  // app só lida com uma conta por usuário). Some do menu assim que já existe
+  // pelo menos uma, pra não ficar clutter no dia a dia; a rota /accounts
+  // continua acessível direto pela URL se precisar mexer nela de novo.
+  const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: accountService.list })
+  const showAccountsLink = accounts?.length === 0
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -25,9 +34,11 @@ export function AppLayout() {
           <NavLink to="/weekly" className={navLinkClass}>
             Semana
           </NavLink>
-          <NavLink to="/accounts" className={navLinkClass}>
-            Contas
-          </NavLink>
+          {showAccountsLink && (
+            <NavLink to="/accounts" className={navLinkClass}>
+              Contas
+            </NavLink>
+          )}
           <NavLink to="/categories" className={navLinkClass}>
             Categorias
           </NavLink>
