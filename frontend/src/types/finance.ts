@@ -62,6 +62,8 @@ export type TransactionPayload = {
   date: string
 }
 
+export type TransactionUpdatePayload = Partial<TransactionPayload>
+
 export type TransactionFilters = {
   account_id?: string
   category_id?: string

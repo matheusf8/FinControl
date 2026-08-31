@@ -1,5 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
+import { TransactionRow } from '../components/TransactionRow'
+import { categoryService, transactionService } from '../services/financeService'
 import { dashboardService } from '../services/dashboardService'
 
 const DAY_LABELS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
@@ -36,8 +38,12 @@ function formatWeekRange(weekStart: string, weekEnd: string): string {
 }
 
 export function WeeklyPage() {
+  const queryClient = useQueryClient()
   const [weekStart, setWeekStart] = useState(() => toIsoDate(mondayOf(new Date())))
   const currentWeekStart = toIsoDate(mondayOf(new Date()))
+  // Qual dia está expandido mostrando os lançamentos (só um por vez, pra não
+  // virar uma lista gigante) — fecha ao trocar de semana.
+  const [expandedDay, setExpandedDay] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'weekly', weekStart],
@@ -49,11 +55,43 @@ export function WeeklyPage() {
     queryKey: ['dashboard', 'balances'],
     queryFn: dashboardService.balances,
   })
+  const { data: categories } = useQuery({ queryKey: ['categories'], queryFn: categoryService.list })
+  const categoriesById = useMemo(
+    () => new Map((categories ?? []).map((c) => [c.id, c])),
+    [categories],
+  )
+
+  // Busca a semana inteira de uma vez (em vez de 7 requests, um por dia) e
+  // agrupa por data no cliente — "Editar"/"Remover" de um lançamento aqui
+  // usa o mesmo componente da aba Transações.
+  const { data: weekTransactions } = useQuery({
+    queryKey: ['transactions', 'week', weekStart],
+    queryFn: () =>
+      transactionService.list({
+        date_from: weekStart,
+        date_to: data?.week_end ?? weekStart,
+      }),
+    enabled: !!data?.week_end,
+  })
+  const transactionsByDay = useMemo(() => {
+    const map = new Map<string, typeof weekTransactions>()
+    for (const t of weekTransactions ?? []) {
+      const day = t.date.slice(0, 10)
+      map.set(day, [...(map.get(day) ?? []), t])
+    }
+    return map
+  }, [weekTransactions])
+
+  const invalidateWeek = () => {
+    queryClient.invalidateQueries({ queryKey: ['transactions', 'week', weekStart] })
+    queryClient.invalidateQueries({ queryKey: ['dashboard', 'weekly', weekStart] })
+  }
 
   const goToWeek = (deltaDays: number) => {
     const current = new Date(`${weekStart}T00:00:00`)
     current.setDate(current.getDate() + deltaDays)
     setWeekStart(toIsoDate(current))
+    setExpandedDay(null)
   }
 
   return (
@@ -124,31 +162,62 @@ export function WeeklyPage() {
             {data.days.map((day, index) => {
               const net = Number(day.income) - Number(day.expense)
               const isToday = day.date === toIsoDate(new Date())
+              const isExpanded = expandedDay === day.date
+              const dayTransactions = transactionsByDay.get(day.date) ?? []
+              const hasNothing = Number(day.income) === 0 && Number(day.expense) === 0
               return (
-                <div
-                  key={day.date}
-                  className={`p-4 flex flex-wrap items-center justify-between gap-3 ${
-                    isToday ? 'bg-indigo-50 dark:bg-indigo-950/30' : ''
-                  }`}
-                >
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
-                      {DAY_LABELS[index]}
-                      {isToday && <span className="ml-2 text-xs text-indigo-600 dark:text-indigo-400">hoje</span>}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{formatDayShort(day.date)}</p>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-green-600">+{formatCurrency(day.income)}</span>
-                    <span className="text-red-600">-{formatCurrency(day.expense)}</span>
-                    <span
-                      className={`font-medium w-28 text-right ${
-                        net >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600'
-                      }`}
-                    >
-                      {formatCurrency(String(net))}
-                    </span>
-                  </div>
+                <div key={day.date}>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedDay(isExpanded ? null : day.date)}
+                    disabled={hasNothing}
+                    className={`w-full p-4 flex flex-wrap items-center justify-between gap-3 text-left ${
+                      isToday ? 'bg-indigo-50 dark:bg-indigo-950/30' : ''
+                    } ${hasNothing ? 'cursor-default' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {DAY_LABELS[index]}
+                        {isToday && (
+                          <span className="ml-2 text-xs text-indigo-600 dark:text-indigo-400">hoje</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{formatDayShort(day.date)}</p>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-green-600">+{formatCurrency(day.income)}</span>
+                      <span className="text-red-600">-{formatCurrency(day.expense)}</span>
+                      <span
+                        className={`font-medium w-28 text-right ${
+                          net >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600'
+                        }`}
+                      >
+                        {formatCurrency(String(net))}
+                      </span>
+                      {!hasNothing && (
+                        <span className="text-gray-400 dark:text-gray-500">{isExpanded ? '▲' : '▼'}</span>
+                      )}
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700 border-t border-gray-200 dark:border-gray-700">
+                      {dayTransactions.length === 0 ? (
+                        <p className="p-4 text-sm text-gray-500 dark:text-gray-400">Carregando...</p>
+                      ) : (
+                        dayTransactions.map((t) => (
+                          <TransactionRow
+                            key={t.id}
+                            transaction={t}
+                            categories={categories ?? []}
+                            categoryName={
+                              t.category_id ? categoriesById.get(t.category_id)?.name : undefined
+                            }
+                            onChanged={invalidateWeek}
+                          />
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}

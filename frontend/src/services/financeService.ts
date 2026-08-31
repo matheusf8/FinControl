@@ -8,6 +8,7 @@ import type {
   Transaction,
   TransactionFilters,
   TransactionPayload,
+  TransactionUpdatePayload,
 } from '../types/finance'
 
 export const accountService = {
@@ -36,5 +37,7 @@ export const transactionService = {
     api.get<Transaction[]>('/transactions', { params: filters }).then((r) => r.data),
   create: (payload: TransactionPayload) =>
     api.post<Transaction>('/transactions', payload).then((r) => r.data),
+  update: (id: string, payload: TransactionUpdatePayload) =>
+    api.put<Transaction>(`/transactions/${id}`, payload).then((r) => r.data),
   remove: (id: string) => api.delete(`/transactions/${id}`).then(() => undefined),
 }

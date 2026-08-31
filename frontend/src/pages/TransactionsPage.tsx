@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { TransactionRow } from '../components/TransactionRow'
 import { parseMoneyInput, toApiAmount } from '../lib/money'
 import { accountService, categoryService, transactionService } from '../services/financeService'
 import type { FlowType, TransactionFilters } from '../types/finance'
@@ -23,10 +24,6 @@ type TransactionForm = z.infer<typeof transactionSchema>
 
 function todayIsoDate() {
   return new Date().toISOString().slice(0, 10)
-}
-
-function formatCurrency(value: string): string {
-  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 export function TransactionsPage() {
@@ -78,11 +75,6 @@ export function TransactionsPage() {
       })
     },
     onError: () => setError('Não foi possível lançar a transação'),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: transactionService.remove,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
   })
 
   const onSubmit = (data: TransactionForm) => {
@@ -315,31 +307,14 @@ export function TransactionsPage() {
           <p className="p-4 text-gray-500 dark:text-gray-400">Nenhuma transação encontrada.</p>
         )}
         {transactions?.map((t) => (
-          <div key={t.id} className="p-4 flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
-                {t.description ||
-                  (t.category_id ? categoriesById.get(t.category_id)?.name : 'Sem descrição')}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {new Date(t.date).toLocaleDateString('pt-BR')} ·{' '}
-                {accountsById.get(t.account_id)?.name ?? '—'}
-                {t.category_id && ` · ${categoriesById.get(t.category_id)?.name ?? ''}`}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className={`font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
-              </span>
-              <button
-                type="button"
-                onClick={() => deleteMutation.mutate(t.id)}
-                className="text-sm text-red-600 hover:underline"
-              >
-                Remover
-              </button>
-            </div>
-          </div>
+          <TransactionRow
+            key={t.id}
+            transaction={t}
+            categories={categories ?? []}
+            categoryName={t.category_id ? categoriesById.get(t.category_id)?.name : undefined}
+            accountName={t.account_id ? accountsById.get(t.account_id)?.name : undefined}
+            onChanged={() => queryClient.invalidateQueries({ queryKey: ['transactions'] })}
+          />
         ))}
       </div>
     </div>
