@@ -3,9 +3,10 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import expression
 
 from app.core.database import Base
 from app.models.account import Account
@@ -50,6 +51,13 @@ class Transaction(Base):
     # de cartão, é a data de vencimento daquela fatura, não a data da compra.
     date: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now_utc, nullable=False)
+
+    # False = "gasto avulso" (dinheiro/débito): conta só na aba Semana e nunca
+    # nos totais da fatura/ciclo do Dashboard. True (padrão) = entra na fatura,
+    # igual sempre foi. Ver dashboard_service (filtra por isso) e WeeklyPage.
+    counts_in_cycle: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=expression.true()
+    )
 
     # Parcelamento de cartão — nulos numa transação normal de conta.
     installment_number: Mapped[int | None] = mapped_column(Integer, nullable=True)

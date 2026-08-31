@@ -26,6 +26,7 @@ def list_transactions(
     type: FlowType | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
+    counts_in_cycle: bool | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[TransactionResponse]:
@@ -36,6 +37,7 @@ def list_transactions(
         type=type,
         date_from=date_from,
         date_to=date_to,
+        counts_in_cycle=counts_in_cycle,
     )
 
 

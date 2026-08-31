@@ -18,6 +18,9 @@ const transactionSchema = z.object({
     .refine((v) => parseMoneyInput(v) > 0, 'O valor precisa ser maior que zero'),
   description: z.string().max(255).optional(),
   date: z.string().min(1, 'Informe a data'),
+  // "Gasto avulso": fora da fatura/ciclo do Dashboard, controlado na aba
+  // Semana (dinheiro, débito). Ver counts_in_cycle no backend.
+  avulso: z.boolean().optional(),
 })
 
 type TransactionForm = z.infer<typeof transactionSchema>
@@ -58,6 +61,7 @@ export function TransactionsPage() {
       categoryId: '',
       amount: '',
       description: '',
+      avulso: false,
     },
   })
 
@@ -72,6 +76,7 @@ export function TransactionsPage() {
         categoryId: '',
         amount: '',
         description: '',
+        avulso: false,
       })
     },
     onError: () => setError('Não foi possível lançar a transação'),
@@ -86,6 +91,7 @@ export function TransactionsPage() {
       amount: toApiAmount(data.amount) ?? data.amount,
       description: data.description || undefined,
       date: new Date(data.date).toISOString(),
+      counts_in_cycle: !data.avulso,
     })
   }
 
@@ -206,6 +212,15 @@ export function TransactionsPage() {
             />
           </div>
 
+          <label
+            htmlFor="avulso"
+            className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 pb-2"
+            title="Gasto em dinheiro/débito, fora da fatura do Nubank. Fica só na aba Semana e não conta no Dashboard."
+          >
+            <input id="avulso" type="checkbox" className="rounded" {...register('avulso')} />
+            Gasto avulso (fora da fatura — aba Semana)
+          </label>
+
           <button
             type="submit"
             disabled={isSubmitting}
@@ -265,6 +280,31 @@ export function TransactionsPage() {
         </div>
 
         <div>
+          <label
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            htmlFor="filterScope"
+          >
+            Filtrar por escopo
+          </label>
+          <select
+            id="filterScope"
+            className="mt-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100"
+            value={filters.counts_in_cycle === undefined ? '' : filters.counts_in_cycle ? 'cycle' : 'avulso'}
+            onChange={(e) =>
+              setFilters((f) => ({
+                ...f,
+                counts_in_cycle:
+                  e.target.value === '' ? undefined : e.target.value === 'cycle',
+              }))
+            }
+          >
+            <option value="">Todos</option>
+            <option value="cycle">Fatura (Dashboard)</option>
+            <option value="avulso">Avulso (Semana)</option>
+          </select>
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="dateFrom">
             De
           </label>
@@ -314,6 +354,7 @@ export function TransactionsPage() {
             categoryName={t.category_id ? categoriesById.get(t.category_id)?.name : undefined}
             accountName={t.account_id ? accountsById.get(t.account_id)?.name : undefined}
             onChanged={() => queryClient.invalidateQueries({ queryKey: ['transactions'] })}
+            showScope
           />
         ))}
       </div>

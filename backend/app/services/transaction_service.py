@@ -38,6 +38,7 @@ class TransactionService:
         type: FlowType | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
+        counts_in_cycle: bool | None = None,
     ) -> list[Transaction]:
         return self.repo.list_by_user(
             user_id,
@@ -46,6 +47,7 @@ class TransactionService:
             type=type,
             date_from=date_from,
             date_to=date_to,
+            counts_in_cycle=counts_in_cycle,
         )
 
     def get(self, transaction_id: str, user_id: str) -> Transaction:

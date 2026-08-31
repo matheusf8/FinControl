@@ -14,6 +14,8 @@ class TransactionCreate(BaseModel):
     amount: Decimal = Field(gt=0)  # sempre positivo; o sinal vem do campo "type"
     description: str | None = Field(default=None, max_length=255)
     date: datetime
+    # False = gasto avulso (dinheiro/débito): fora da fatura, só na aba Semana.
+    counts_in_cycle: bool = True
 
 
 class TransactionUpdate(BaseModel):
@@ -23,6 +25,7 @@ class TransactionUpdate(BaseModel):
     amount: Decimal | None = Field(default=None, gt=0)
     description: str | None = Field(default=None, max_length=255)
     date: datetime | None = None
+    counts_in_cycle: bool | None = None
 
 
 class TransactionResponse(BaseModel):
@@ -40,6 +43,7 @@ class TransactionResponse(BaseModel):
     description: str | None
     date: datetime
     created_at: datetime
+    counts_in_cycle: bool = True
     installment_number: int | None = None
     installment_total: int | None = None
     purchase_group_id: str | None = None

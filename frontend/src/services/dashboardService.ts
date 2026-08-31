@@ -22,6 +22,10 @@ export const dashboardService = {
       .get<CategoryBreakdownItem[]>('/dashboard/by-category', { params: { type, ...period } })
       .then((r) => r.data),
   cycleView: () => api.get<CycleViewResponse>('/dashboard/cycle-view').then((r) => r.data),
+  // Últimos `count` ciclos (mais recente primeiro) — usado pela aba Faturas
+  // pra navegar faturas passadas em só-leitura.
+  cycles: (count = 12) =>
+    api.get<CyclePeriod[]>('/dashboard/cycles', { params: { count } }).then((r) => r.data),
   monthlyEvolution: (months = 6) =>
     api
       .get<MonthlyEvolutionItem[]>('/dashboard/monthly-evolution', { params: { months } })

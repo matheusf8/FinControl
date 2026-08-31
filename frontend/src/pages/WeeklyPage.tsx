@@ -64,12 +64,17 @@ export function WeeklyPage() {
   // Busca a semana inteira de uma vez (em vez de 7 requests, um por dia) e
   // agrupa por data no cliente — "Editar"/"Remover" de um lançamento aqui
   // usa o mesmo componente da aba Transações.
+  //
+  // Só gastos avulsos (counts_in_cycle=false): a aba Semana é o controle do
+  // dinheiro/débito do dia a dia, separado da fatura do Dashboard. Assim
+  // apagar/editar algo aqui não mexe nos totais do Dashboard, e vice-versa.
   const { data: weekTransactions } = useQuery({
     queryKey: ['transactions', 'week', weekStart],
     queryFn: () =>
       transactionService.list({
         date_from: weekStart,
         date_to: data?.week_end ?? weekStart,
+        counts_in_cycle: false,
       }),
     enabled: !!data?.week_end,
   })
@@ -98,7 +103,10 @@ export function WeeklyPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Controle semanal</h1>
-        <p className="text-gray-500 dark:text-gray-400">Receitas e despesas de segunda a domingo.</p>
+        <p className="text-gray-500 dark:text-gray-400">
+          Só gastos avulsos (dinheiro, débito) de segunda a domingo — marcados como "gasto avulso" na
+          aba Transações. Não entram na fatura do Dashboard.
+        </p>
       </div>
 
       <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow p-4">

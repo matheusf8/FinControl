@@ -51,6 +51,9 @@ export type Transaction = {
   description: string | null
   date: string
   created_at: string
+  // false = "gasto avulso" (dinheiro/débito): aparece só na aba Semana e nunca
+  // nos totais da fatura/ciclo do Dashboard. true (padrão) = entra na fatura.
+  counts_in_cycle: boolean
 }
 
 export type TransactionPayload = {
@@ -60,6 +63,7 @@ export type TransactionPayload = {
   amount: string
   description?: string
   date: string
+  counts_in_cycle?: boolean
 }
 
 export type TransactionUpdatePayload = Partial<TransactionPayload>
@@ -70,4 +74,5 @@ export type TransactionFilters = {
   type?: FlowType
   date_from?: string
   date_to?: string
+  counts_in_cycle?: boolean
 }

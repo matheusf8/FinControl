@@ -21,6 +21,7 @@ class TransactionRepository:
         type: FlowType | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
+        counts_in_cycle: bool | None = None,
     ) -> list[Transaction]:
         query = self.db.query(Transaction).filter(Transaction.user_id == user_id)
         if account_id:
@@ -29,6 +30,8 @@ class TransactionRepository:
             query = query.filter(Transaction.category_id == category_id)
         if type:
             query = query.filter(Transaction.type == type)
+        if counts_in_cycle is not None:
+            query = query.filter(Transaction.counts_in_cycle.is_(counts_in_cycle))
         if date_from:
             query = query.filter(Transaction.date >= date_from)
         if date_to:

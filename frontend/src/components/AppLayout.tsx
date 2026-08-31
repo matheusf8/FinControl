@@ -45,8 +45,8 @@ export function AppLayout() {
           <NavLink to="/transactions" className={navLinkClass}>
             Transações
           </NavLink>
-          <NavLink to="/cards" className={navLinkClass}>
-            Cartões
+          <NavLink to="/invoices" className={navLinkClass}>
+            Faturas
           </NavLink>
           <NavLink to="/goals" className={navLinkClass}>
             Metas

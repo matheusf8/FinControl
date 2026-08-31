@@ -24,8 +24,16 @@ def _create_category(client, headers, name="Categoria", type_="expense"):
     ).json()
 
 
-def _create_transaction(client, headers, account_id, amount, type_, date, category_id=None):
-    payload = {"account_id": account_id, "type": type_, "amount": amount, "date": date}
+def _create_transaction(
+    client, headers, account_id, amount, type_, date, category_id=None, counts_in_cycle=True
+):
+    payload = {
+        "account_id": account_id,
+        "type": type_,
+        "amount": amount,
+        "date": date,
+        "counts_in_cycle": counts_in_cycle,
+    }
     if category_id:
         payload["category_id"] = category_id
     return client.post("/api/transactions", json=payload, headers=headers).json()
@@ -159,8 +167,13 @@ def test_monthly_evolution_returns_fixed_window(client, auth_headers):
 
 def test_weekly_summary_defaults_to_current_week(client, auth_headers):
     account = _create_account(client, auth_headers, initial_balance="100.00")
-    _create_transaction(client, auth_headers, account["id"], "200.00", "income", _now_iso())
-    _create_transaction(client, auth_headers, account["id"], "80.00", "expense", _now_iso())
+    # A aba Semana só conta gastos avulsos (counts_in_cycle=False).
+    _create_transaction(
+        client, auth_headers, account["id"], "200.00", "income", _now_iso(), counts_in_cycle=False
+    )
+    _create_transaction(
+        client, auth_headers, account["id"], "80.00", "expense", _now_iso(), counts_in_cycle=False
+    )
 
     resp = client.get("/api/dashboard/weekly", headers=auth_headers)
     assert resp.status_code == 200
@@ -174,9 +187,22 @@ def test_weekly_summary_defaults_to_current_week(client, auth_headers):
     assert body["total_income"] == "200.00"
     assert body["total_expense"] == "80.00"
     assert body["net"] == "120.00"
-    # saldo total é o saldo geral das contas (100 inicial + 200 - 80), não só da semana
-    assert body["total_balance"] == "220.00"
+    # saldo total = saldo geral das contas; gasto avulso não entra nele (só o
+    # saldo inicial aqui), igual não entra na fatura do Dashboard.
+    assert body["total_balance"] == "100.00"
     assert len(body["days"]) == 7
+
+
+def test_weekly_summary_ignores_cycle_transactions(client, auth_headers):
+    """Lançamento normal (da fatura) não aparece na aba Semana; só avulso."""
+    account = _create_account(client, auth_headers)
+    _create_transaction(client, auth_headers, account["id"], "300.00", "expense", _now_iso())
+    _create_transaction(
+        client, auth_headers, account["id"], "25.00", "expense", _now_iso(), counts_in_cycle=False
+    )
+
+    body = client.get("/api/dashboard/weekly", headers=auth_headers).json()
+    assert body["total_expense"] == "25.00"
 
 
 def test_weekly_summary_groups_by_day_of_week(client, auth_headers):
@@ -186,7 +212,8 @@ def test_weekly_summary_groups_by_day_of_week(client, auth_headers):
     wednesday = monday + timedelta(days=2)
 
     _create_transaction(
-        client, auth_headers, account["id"], "60.00", "expense", wednesday.isoformat()
+        client, auth_headers, account["id"], "60.00", "expense", wednesday.isoformat(),
+        counts_in_cycle=False,
     )
 
     resp = client.get("/api/dashboard/weekly", headers=auth_headers)
@@ -206,7 +233,8 @@ def test_weekly_summary_accepts_week_start_for_navigation(client, auth_headers):
     last_monday = this_monday - timedelta(days=7)
 
     _create_transaction(
-        client, auth_headers, account["id"], "40.00", "income", last_monday.isoformat()
+        client, auth_headers, account["id"], "40.00", "income", last_monday.isoformat(),
+        counts_in_cycle=False,
     )
 
     resp = client.get(
@@ -221,6 +249,18 @@ def test_weekly_summary_accepts_week_start_for_navigation(client, auth_headers):
     # semana atual não deve enxergar o lançamento da semana passada
     resp_current = client.get("/api/dashboard/weekly", headers=auth_headers)
     assert resp_current.json()["total_income"] == "0"
+
+
+def test_recent_cycles_returns_periods_newest_first(client, auth_headers):
+    resp = client.get("/api/dashboard/cycles", params={"count": 4}, headers=auth_headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body) == 4
+    # o primeiro contém hoje; cada um seguinte é mais antigo e não sobrepõe
+    now = datetime.now(timezone.utc)
+    assert _parse(body[0]["date_from"]) <= now <= _parse(body[0]["date_to"])
+    for newer, older in zip(body, body[1:]):
+        assert _parse(older["date_to"]) < _parse(newer["date_from"])
 
 
 def test_cycle_view_shows_only_open_before_closing_day(client, auth_headers):

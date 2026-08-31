@@ -25,9 +25,15 @@ class DashboardRepository:
         self.db = db
 
     def _sum_by_type(self, account_id: str, type: FlowType) -> Decimal:
+        # Gasto avulso (counts_in_cycle=False) não é do Nubank — fica fora do
+        # saldo calculado da conta, igual fica fora da fatura no Dashboard.
         total = (
             self.db.query(func.coalesce(func.sum(Transaction.amount), 0))
-            .filter(Transaction.account_id == account_id, Transaction.type == type)
+            .filter(
+                Transaction.account_id == account_id,
+                Transaction.type == type,
+                Transaction.counts_in_cycle.is_(True),
+            )
             .scalar()
         )
         return _to_decimal(total)
@@ -45,14 +51,21 @@ class DashboardRepository:
         return results
 
     def totals_by_type(
-        self, user_id: str, date_from: datetime, date_to: datetime
+        self,
+        user_id: str,
+        date_from: datetime,
+        date_to: datetime,
+        counts_in_cycle: bool = True,
     ) -> dict[FlowType, Decimal]:
+        # counts_in_cycle=True: totais da fatura/ciclo (Dashboard).
+        # counts_in_cycle=False: gastos avulsos (aba Semana).
         rows = (
             self.db.query(Transaction.type, func.coalesce(func.sum(Transaction.amount), 0))
             .filter(
                 Transaction.user_id == user_id,
                 Transaction.date >= date_from,
                 Transaction.date <= date_to,
+                Transaction.counts_in_cycle.is_(counts_in_cycle),
             )
             .group_by(Transaction.type)
             .all()
@@ -65,6 +78,7 @@ class DashboardRepository:
     def totals_by_category(
         self, user_id: str, date_from: datetime, date_to: datetime, type: FlowType
     ) -> list[tuple[Category | None, Decimal]]:
+        # Só o que entra na fatura/ciclo — a pizza do Dashboard ignora avulsos.
         rows = (
             self.db.query(Category, func.coalesce(func.sum(Transaction.amount), 0))
             .join(Transaction, Transaction.category_id == Category.id)
@@ -73,6 +87,7 @@ class DashboardRepository:
                 Transaction.type == type,
                 Transaction.date >= date_from,
                 Transaction.date <= date_to,
+                Transaction.counts_in_cycle.is_(True),
             )
             .group_by(Category.id)
             .all()
@@ -87,6 +102,7 @@ class DashboardRepository:
                 Transaction.category_id.is_(None),
                 Transaction.date >= date_from,
                 Transaction.date <= date_to,
+                Transaction.counts_in_cycle.is_(True),
             )
             .scalar()
         )
@@ -96,11 +112,17 @@ class DashboardRepository:
         return result
 
     def daily_totals(
-        self, user_id: str, date_from: datetime, date_to: datetime
+        self,
+        user_id: str,
+        date_from: datetime,
+        date_to: datetime,
+        counts_in_cycle: bool = True,
     ) -> dict[str, dict[str, Decimal]]:
         """Totais de income/expense por dia (chave "AAAA-MM-DD"), só pros dias
         que tiverem lançamento — dias sem nada não aparecem aqui (quem chama
-        preenche os buracos, ex: semana inteira mesmo com dias zerados)."""
+        preenche os buracos, ex: semana inteira mesmo com dias zerados).
+
+        A aba Semana chama com counts_in_cycle=False (só gastos avulsos)."""
         year_expr = extract("year", Transaction.date)
         month_expr = extract("month", Transaction.date)
         day_expr = extract("day", Transaction.date)
@@ -116,6 +138,7 @@ class DashboardRepository:
                 Transaction.user_id == user_id,
                 Transaction.date >= date_from,
                 Transaction.date <= date_to,
+                Transaction.counts_in_cycle.is_(counts_in_cycle),
             )
             .group_by(year_expr, month_expr, day_expr, Transaction.type)
             .all()
@@ -135,7 +158,7 @@ class DashboardRepository:
             self.db.query(
                 year_expr, month_expr, Transaction.type, func.coalesce(func.sum(Transaction.amount), 0)
             )
-            .filter(Transaction.user_id == user_id)
+            .filter(Transaction.user_id == user_id, Transaction.counts_in_cycle.is_(True))
             .group_by(year_expr, month_expr, Transaction.type)
             .all()
         )

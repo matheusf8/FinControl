@@ -173,6 +173,18 @@ class DashboardService:
         closed_period = CyclePeriod(date_from=closed_start, date_to=closed_end)
         return CycleViewResponse(closed=closed_period, open=open_period)
 
+    def recent_cycles(self, closing_day: int, count: int) -> list[CyclePeriod]:
+        """Os últimos `count` ciclos financeiros, do mais recente (o que contém
+        hoje) pro mais antigo — usado pela aba Faturas pra navegar faturas
+        passadas em modo só-leitura."""
+        periods: list[CyclePeriod] = []
+        anchor = datetime.now(timezone.utc)
+        for _ in range(count):
+            start, end = _cycle_period(closing_day, anchor)
+            periods.append(CyclePeriod(date_from=start, date_to=end))
+            anchor = start - timedelta(microseconds=1)
+        return periods
+
     def monthly_evolution(self, user_id: str, months: int) -> list[MonthlyEvolutionItem]:
         rows = self.repo.monthly_evolution(user_id, months)
         return [
@@ -192,8 +204,11 @@ class DashboardService:
         range_start = datetime.combine(monday, datetime.min.time(), tzinfo=timezone.utc)
         range_end = datetime.combine(sunday, datetime.max.time(), tzinfo=timezone.utc)
 
-        totals = self.repo.totals_by_type(user_id, range_start, range_end)
-        daily = self.repo.daily_totals(user_id, range_start, range_end)
+        # A aba Semana é o controle dos gastos avulsos (dinheiro/débito) — só
+        # transações fora da fatura/ciclo entram aqui. Assim apagar/editar um
+        # lançamento na Semana não mexe nos totais do Dashboard, e vice-versa.
+        totals = self.repo.totals_by_type(user_id, range_start, range_end, counts_in_cycle=False)
+        daily = self.repo.daily_totals(user_id, range_start, range_end, counts_in_cycle=False)
 
         days = []
         for i in range(7):

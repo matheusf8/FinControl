@@ -11,6 +11,7 @@ from app.models.user import User
 from app.schemas.dashboard import (
     BalancesResponse,
     CategoryBreakdownItem,
+    CyclePeriod,
     CycleViewResponse,
     MonthlyEvolutionItem,
     SummaryResponse,
@@ -62,6 +63,17 @@ def get_cycle_view(
     """Diz pro front se é pra mostrar só a fatura em aberto (ainda não
     fechou esse mês) ou a fatura fechada + a nova em aberto (já fechou)."""
     return DashboardService(db).cycle_view(current_user.id, current_user.cycle_closing_day)
+
+
+@router.get("/cycles", response_model=list[CyclePeriod])
+def get_recent_cycles(
+    count: int = Query(default=12, ge=1, le=48),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[CyclePeriod]:
+    """Últimos `count` ciclos (do mais recente pro mais antigo) pra aba
+    Faturas navegar faturas passadas em só-leitura."""
+    return DashboardService(db).recent_cycles(current_user.cycle_closing_day, count)
 
 
 @router.get("/monthly-evolution", response_model=list[MonthlyEvolutionItem])

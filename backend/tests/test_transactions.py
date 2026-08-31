@@ -105,6 +105,45 @@ def test_filters(client, auth_headers):
     assert resp.json()[0]["type"] == "income"
 
 
+def test_counts_in_cycle_defaults_true_and_filters(client, auth_headers):
+    account = _create_account(client, auth_headers)
+
+    normal = client.post(
+        "/api/transactions",
+        json={
+            "account_id": account["id"],
+            "type": "expense",
+            "amount": "100.00",
+            "date": "2026-08-01T10:00:00",
+        },
+        headers=auth_headers,
+    ).json()
+    assert normal["counts_in_cycle"] is True
+
+    avulso = client.post(
+        "/api/transactions",
+        json={
+            "account_id": account["id"],
+            "type": "expense",
+            "amount": "15.00",
+            "date": "2026-08-02T10:00:00",
+            "counts_in_cycle": False,
+        },
+        headers=auth_headers,
+    ).json()
+    assert avulso["counts_in_cycle"] is False
+
+    only_cycle = client.get(
+        "/api/transactions", params={"counts_in_cycle": True}, headers=auth_headers
+    ).json()
+    assert [t["id"] for t in only_cycle] == [normal["id"]]
+
+    only_avulso = client.get(
+        "/api/transactions", params={"counts_in_cycle": False}, headers=auth_headers
+    ).json()
+    assert [t["id"] for t in only_avulso] == [avulso["id"]]
+
+
 def test_delete_transaction(client, auth_headers):
     account = _create_account(client, auth_headers)
     created = client.post(

@@ -25,12 +25,17 @@ export function TransactionRow({
   categoryName,
   accountName,
   onChanged,
+  showScope = false,
 }: {
   transaction: Transaction
   categories: Category[]
   categoryName?: string
   accountName?: string
   onChanged: () => void
+  // Mostra um selo "avulso" quando a transação está fora da fatura
+  // (counts_in_cycle=false). Usado na aba Transações, onde os dois tipos
+  // convivem na mesma lista; na aba Semana é sempre avulso, então fica off.
+  showScope?: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,6 +45,7 @@ export function TransactionRow({
   const [categoryId, setCategoryId] = useState(transaction.category_id ?? '')
   const [description, setDescription] = useState(transaction.description ?? '')
   const [date, setDate] = useState(toDateInputValue(transaction.date))
+  const [countsInCycle, setCountsInCycle] = useState(transaction.counts_in_cycle)
 
   const startEditing = () => {
     setType(transaction.type)
@@ -47,6 +53,7 @@ export function TransactionRow({
     setCategoryId(transaction.category_id ?? '')
     setDescription(transaction.description ?? '')
     setDate(toDateInputValue(transaction.date))
+    setCountsInCycle(transaction.counts_in_cycle)
     setError(null)
     setEditing(true)
   }
@@ -61,6 +68,7 @@ export function TransactionRow({
         category_id: categoryId || undefined,
         description: description || undefined,
         date: new Date(`${date}T00:00:00`).toISOString(),
+        counts_in_cycle: countsInCycle,
       })
     },
     onSuccess: () => {
@@ -123,6 +131,20 @@ export function TransactionRow({
           onChange={(e) => setDate(e.target.value)}
           className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
         />
+        {showScope && (
+          <label
+            className="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300"
+            title="Desmarcado = gasto avulso (fora da fatura, aba Semana)."
+          >
+            <input
+              type="checkbox"
+              checked={countsInCycle}
+              onChange={(e) => setCountsInCycle(e.target.checked)}
+              className="rounded"
+            />
+            Na fatura
+          </label>
+        )}
         <button
           type="button"
           onClick={() => updateMutation.mutate()}
@@ -148,6 +170,11 @@ export function TransactionRow({
       <div>
         <p className="font-medium text-gray-900 dark:text-gray-100">
           {transaction.description || categoryName || 'Sem descrição'}
+          {showScope && !transaction.counts_in_cycle && (
+            <span className="ml-2 rounded bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+              avulso
+            </span>
+          )}
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {toDateInputValue(transaction.date).split('-').reverse().join('/')}
