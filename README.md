@@ -69,7 +69,7 @@ npm run dev
 
 ## Como rodar os testes
 
-Backend (67 testes):
+Backend (100 testes):
 ```bash
 cd backend
 .venv\Scripts\python.exe -m pytest
